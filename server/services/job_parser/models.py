@@ -74,14 +74,12 @@ class JobPosting(BaseModel):
     employment_type: Optional[EmploymentType] = None
     seniority: Optional[Seniority] = None
     salary: Optional[Salary] = None
-    
     stack: List[str] = Field(default_factory=list)
     nice_to_have_stack: List[str] = Field(default_factory=list)
     requirements: List[str] = Field(default_factory=list)
     responsibilities: List[str] = Field(default_factory=list)
     project_description: Optional[str] = None
     raw_data: Optional[str] = None
-    
     source: Optional[str] = Field(default=None, description="Auto-filled from URL")
     
     @validator('stack', 'nice_to_have_stack', pre=True, always=True)

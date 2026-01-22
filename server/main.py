@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import os
 import logging
 
 from core.database import check_connection, engine
+from core.config import UPLOAD_DIR
 from database import models
 from routers import profiles, resumes, applications
 
@@ -26,8 +26,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 app.include_router(profiles.router, prefix="/profiles", tags=["Profiles"])
 app.include_router(resumes.router, prefix="/resumes", tags=["Resumes"])

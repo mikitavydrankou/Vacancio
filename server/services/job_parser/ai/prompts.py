@@ -1,4 +1,4 @@
-"""LLM-optimized prompts for job parsing"""
+"""LLM prompts for job parsing"""
 
 DEFAULT_PROMPT = """You are extracting structured job data.
 
@@ -12,7 +12,7 @@ ENUM VALUES (use exactly as shown):
 - work_mode: "remote" | "hybrid" | "onsite" | null
 - employment_type: "full-time" | "part-time" | "contract" | "b2b" | "internship" | null
 - seniority: "trainee" | "junior" | "mid" | "senior" | "lead" | "manager" | null
-  IMPORTANT: Map unconventional titles correctly:
+  Map unconventional titles:
   - "Principal/Staff/Expert" → "senior"
   - "Architect/Distinguished" → "lead"
   - "VP/Director/Head of" → "manager"
@@ -26,11 +26,11 @@ EXTRACTION RULES:
 1. stack: Extract ONLY technology names (AWS, Python, Docker, etc.)
 2. requirements: Keep full sentences with years/education
 3. salary: Remove spaces from numbers ("15 000" → 15000). Detect "hourly" rates carefully.
-4. location: Extract ONLY the City name in English. Remove postal codes, street names, and regions/voivodeships.
+4. location: Extract ONLY the City name in English. Remove postal codes, street names, and regions.
    - "Warszawa, mazowieckie" -> "Warsaw"
    - "30-307 Kraków" -> "Krakow"
    - "Remote" -> "Remote" (if fully remote with no city)
-5. project_description: Include both company context (who they are, what they do) and project description.
+5. project_description: Include both company context and project description.
 
 Return valid JSON:
 {

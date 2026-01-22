@@ -1,19 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
+from fastapi import APIRouter, Depends, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import os
 import shutil
+
 from core.database import get_db
+from core.config import UPLOAD_DIR
 from database import crud, schemas
 
 router = APIRouter()
 
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.get("/", response_model=List[schemas.Resume])
 def read_resumes(profile_id: Optional[str] = None, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return crud.get_resumes(db, profile_id=profile_id, skip=skip, limit=limit)
+
 
 @router.post("/", response_model=schemas.Resume)
 async def create_resume(
@@ -21,10 +22,8 @@ async def create_resume(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    # Determine version
     version = crud.get_latest_resume_version(db, profile_id) + 1
     
-    # Save file
     safe_filename = file.filename.replace(" ", "_").replace("/", "").replace("\\", "")
     file_path = os.path.join(UPLOAD_DIR, f"{profile_id}_v{version}_{safe_filename}")
     

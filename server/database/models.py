@@ -1,13 +1,16 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Enum, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from core.database import Base
-import enum
-import uuid
 from sqlalchemy.dialects.postgresql import JSONB
+import uuid
+import enum
+
+from core.database import Base
+
 
 def generate_uuid():
     return str(uuid.uuid4())
+
 
 class ApplicationStatus(str, enum.Enum):
     parsing = "parsing"
@@ -18,6 +21,7 @@ class ApplicationStatus(str, enum.Enum):
     offer = "offer"
     rejected = "rejected"
 
+
 class Seniority(str, enum.Enum):
     trainee = "trainee"
     junior = "junior"
@@ -25,6 +29,7 @@ class Seniority(str, enum.Enum):
     senior = "senior"
     lead = "lead"
     manager = "manager"
+
 
 class Profile(Base):
     __tablename__ = "profiles"
@@ -36,6 +41,7 @@ class Profile(Base):
     resumes = relationship("Resume", back_populates="profile", cascade="all, delete-orphan")
     applications = relationship("JobApplication", back_populates="profile", cascade="all, delete-orphan")
 
+
 class Resume(Base):
     __tablename__ = "resumes"
 
@@ -43,11 +49,12 @@ class Resume(Base):
     profile_id = Column(String, ForeignKey("profiles.id"), nullable=False)
     name = Column(String, nullable=False)
     version = Column(Integer, nullable=False)
-    file_path = Column(String, nullable=False)  # Path to PDF in server/uploads
+    file_path = Column(String, nullable=False)
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
 
     profile = relationship("Profile", back_populates="resumes")
     applications = relationship("JobApplication", back_populates="resume")
+
 
 class JobApplication(Base):
     __tablename__ = "applications"
@@ -55,9 +62,8 @@ class JobApplication(Base):
     id = Column(String, primary_key=True, default=generate_uuid)
     profile_id = Column(String, ForeignKey("profiles.id"), nullable=False)
     resume_id = Column(String, ForeignKey("resumes.id"), nullable=False)
-    resume_version = Column(Integer, nullable=False) # Snapshot of version at apply time
+    resume_version = Column(Integer, nullable=False)
     
-    # Metadata
     url = Column(String, nullable=False)
     company = Column(String, nullable=False)
     position = Column(String, nullable=False)
@@ -65,7 +71,6 @@ class JobApplication(Base):
     salary = Column(String)
     source = Column(String)
     
-    # AI Parsed Data
     tech_stack = Column(JSONB, default=[])
     nice_to_have_stack = Column(JSONB, default=[])
     responsibilities = Column(JSONB, default=[])
@@ -74,9 +79,8 @@ class JobApplication(Base):
     employment_type = Column(String)
     seniority = Column(Enum(Seniority), nullable=True)
     description = Column(Text)
-    raw_data = Column(Text) # Raw text sent to AI
+    raw_data = Column(Text)
     
-    # Status
     status = Column(Enum(ApplicationStatus), default=ApplicationStatus.no_response)
     is_favorite = Column(Boolean, default=False)
     is_archived = Column(Boolean, default=False)

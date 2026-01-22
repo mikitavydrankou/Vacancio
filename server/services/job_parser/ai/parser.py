@@ -4,11 +4,20 @@ import json
 import logging
 import requests
 from urllib.parse import urlparse
+
 from ..models import JobPosting
 from ..validator import auto_fix_job_posting
 from .prompts import DEFAULT_PROMPT
 
 logger = logging.getLogger(__name__)
+
+SOURCE_MAPPINGS = {
+    "indeed": ["indeed"],
+    "nofluffjobs": ["nofluffjobs", "nofluff"],
+    "pracuj": ["pracuj.pl"],
+    "justjoin": ["justjoin.it"],
+    "linkedin": ["linkedin"],
+}
 
 
 def parse_with_ai(
@@ -25,7 +34,6 @@ def parse_with_ai(
     full_prompt = f"{prompt}\n\nJob text:\n{text}"
     
     logger.info(f"🤖 Parsing with {model}")
-    logger.info("  > Sending request to OpenRouter...")
     
     try:
         response = requests.post(
@@ -40,7 +48,6 @@ def parse_with_ai(
             },
             timeout=60
         )
-        logger.info(f"  < Match response: {response.status_code}")
     except requests.exceptions.Timeout:
         logger.error("❌ OpenRouter request timed out after 60s")
         raise
@@ -52,16 +59,13 @@ def parse_with_ai(
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         logger.error(f"❌ OpenRouter HTTP error: {e}")
-        logger.error(f"   Response: {response.text[:500]}")
         raise ValueError(f"API request failed: {e}")
     
     try:
         response_data = response.json()
         content = response_data["choices"][0]["message"]["content"]
-        logger.info(f"  < Content length: {len(content)}")
     except (KeyError, json.JSONDecodeError) as e:
         logger.error(f"❌ Invalid API response format: {e}")
-        logger.error(f"   Response: {response.text[:500]}")
         raise ValueError(f"Invalid API response: {e}")
     
     try:
@@ -69,7 +73,6 @@ def parse_with_ai(
         data = json.loads(json_str)
     except json.JSONDecodeError as e:
         logger.error(f"❌ Failed to parse JSON from LLM response: {e}")
-        logger.error(f"   Content: {content[:500]}")
         raise ValueError(f"Invalid JSON in LLM response: {e}")
     
     try:
@@ -82,7 +85,6 @@ def parse_with_ai(
         job = auto_fix_job_posting(job)
     except Exception as e:
         logger.error(f"❌ Validation error: {e}")
-        logger.error(f"   Data: {json.dumps(data, indent=2)[:500]}")
         raise ValueError(f"Job posting validation failed: {e}")
     
     logger.info(f"✅ Parsed: {job.job_title} @ {job.company}")
@@ -92,18 +94,11 @@ def parse_with_ai(
 def _extract_source(url: str) -> str:
     domain = urlparse(url).netloc.lower()
     
-    if "indeed" in domain:
-        return "indeed"
-    elif "nofluffjobs" in domain or "nofluff" in domain:
-        return "nofluffjobs"
-    elif "pracuj.pl" in domain:
-        return "pracuj"
-    elif "justjoin.it" in domain:
-        return "justjoin"
-    elif "linkedin" in domain:
-        return "linkedin"
-    else:
-        return domain.replace("www.", "").split(".")[0]
+    for source_name, keywords in SOURCE_MAPPINGS.items():
+        if any(kw in domain for kw in keywords):
+            return source_name
+    
+    return domain.replace("www.", "").split(".")[0]
 
 
 def _extract_json(text: str) -> str:
@@ -116,22 +111,22 @@ def _extract_json(text: str) -> str:
 
 def _normalize_enums(data: dict) -> dict:
     if data.get("work_mode"):
-        data["work_mode"] = data["work_mode"].lower().replace("-", "").replace("_", "")
-        if data["work_mode"] == "onsite":
-            data["work_mode"] = "onsite"
+        wm = data["work_mode"].lower().replace("-", "").replace("_", "")
+        data["work_mode"] = wm
     
     if data.get("employment_type"):
         et = data["employment_type"].lower()
-        if "full" in et:
-            data["employment_type"] = "full-time"
-        elif "part" in et:
-            data["employment_type"] = "part-time"
-        elif "b2b" in et:
-            data["employment_type"] = "b2b"
-        elif "intern" in et:
-            data["employment_type"] = "internship"
-        elif "contract" in et:
-            data["employment_type"] = "contract"
+        employment_map = {
+            "full": "full-time",
+            "part": "part-time",
+            "b2b": "b2b",
+            "intern": "internship",
+            "contract": "contract"
+        }
+        for key, value in employment_map.items():
+            if key in et:
+                data["employment_type"] = value
+                break
     
     if data.get("salary"):
         salary = data["salary"]
@@ -139,12 +134,11 @@ def _normalize_enums(data: dict) -> dict:
             salary["currency"] = salary["currency"].upper()
         if salary.get("unit"):
             unit = salary["unit"].lower()
-            if "month" in unit:
-                salary["unit"] = "month"
-            elif "year" in unit:
-                salary["unit"] = "year"
-            elif "hour" in unit:
-                salary["unit"] = "hour"
+            unit_map = {"month": "month", "year": "year", "hour": "hour"}
+            for key, value in unit_map.items():
+                if key in unit:
+                    salary["unit"] = value
+                    break
         if salary.get("gross_net"):
             salary["gross_net"] = salary["gross_net"].lower()
     
