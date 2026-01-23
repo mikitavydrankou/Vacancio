@@ -1,6 +1,6 @@
 import { JobApplication, Resume, ResumeProfile, ApplicationStatus } from "./types"
 
-const API_Base = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+const API_Base = process.env.NEXT_PUBLIC_BACKEND_URL || (typeof window !== "undefined" ? `http://${window.location.hostname}:8000` : "http://localhost:8000")
 
 export async function fetchProfiles(): Promise<ResumeProfile[]> {
     const res = await fetch(`${API_Base}/profiles`)
