@@ -23,7 +23,7 @@ ENUM VALUES (use exactly as shown):
 - gross_net: "gross" | "net" | "unknown"
 
 EXTRACTION RULES:
-1. stack: Extract ONLY technology names (AWS, Python, Docker, etc.)
+1. stack: Extract technology names or key tools (e.g., React, Figma, SQL, Python, AWS, etc.)
 2. requirements: Keep full sentences with years/education
 3. salary: Remove spaces from numbers ("15 000" → 15000). Detect "hourly" rates carefully.
 4. location: Extract ONLY the City name in English. Remove postal codes, street names, and regions.

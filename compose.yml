@@ -52,18 +52,14 @@ services:
       - network
     restart: unless-stopped
 
-  pgweb:
-    image: sosedoff/pgweb
+
+  adminer:
+    image: adminer:latest
     restart: always
     ports:
-      - "8080:8081"
-    environment:
-      - PGWEB_DATABASE_URL=postgres://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@db:5432/${DATABASE_NAME}?sslmode=disable
+      - "8080:8080"   
     depends_on:
-      db:
-        condition: service_healthy
-    env_file:
-      - .env
+      - db
     networks:
       - network
 

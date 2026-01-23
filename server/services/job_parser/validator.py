@@ -6,23 +6,54 @@ import re
 logger = logging.getLogger(__name__)
 
 KNOWN_TECHNOLOGIES = {
+    # DevOps & Infrastructure
     "AWS", "Azure", "GCP", "Google Cloud", "DigitalOcean", "Heroku",
     "EKS", "ECS", "EC2", "S3", "Lambda", "CloudWatch", "IAM",
     "Azure VM", "Azure Networking", "Azure Storage",
     "Docker", "Kubernetes", "Helm", "Rancher", "OpenShift",
     "Terraform", "Ansible", "Puppet", "Chef", "CloudFormation",
     "CI/CD", "Jenkins", "GitLab CI", "GitHub Actions", "CircleCI", "Travis CI",
-    "ArgoCD", "Flux",
+    "ArgoCD", "Flux", "Nginx", "Apache", "HAProxy", "Traefik",
+
+    # Programming Languages
     "Python", "Go", "Java", "JavaScript", "TypeScript", "Bash", "PowerShell",
-    "C++", "C#", "Ruby", "PHP", "Rust", "Scala",
+    "C++", "C#", "Ruby", "PHP", "Rust", "Scala", "Swift", "Kotlin", "Dart",
+    "Objective-C", "HTML", "CSS", "SQL",
+
+    # Databases & Storage
     "PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch", "Cassandra",
-    "DynamoDB", "Oracle", "SQL Server",
+    "DynamoDB", "Oracle", "SQL Server", "SQLite", "ClickHouse", "MariaDB",
+
+    # Frontend
+    "React", "Vue", "Angular", "Svelte", "Next.js", "Nuxt.js", "Vite", "Webpack",
+    "Tailwind", "Bootstrap", "Sass", "Less", "Redux", "MobX", "Zustand", "Emotion",
+
+    # Mobile
+    "Flutter", "React Native", "SwiftUI", "Jetpack Compose", "Android SDK", "iOS SDK",
+
+    # Backend Frameworks
+    "Node.js", "Express", "NestJS", "FastAPI", "Django", "Flask", "Spring Boot",
+    "Laravel", "Symfony", ".NET Core", "Ruby on Rails",
+
+    # Monitoring & Observability
     "Prometheus", "Grafana", "Datadog", "New Relic", "Splunk", "ELK",
-    "Kibana", "Logstash",
-    "Nginx", "Apache", "HAProxy", "Traefik",
-    "Kafka", "RabbitMQ", "NATS",
-    "TCP", "UDP", "DNS", "HTTP", "HTTPS", "SSL", "TLS", "VPN",
-    "Linux", "Unix", "Windows", "Git", "SVN",
+    "Kibana", "Logstash", "Zabbix", "Sentry",
+
+    # Data Science & AI
+    "Pandas", "NumPy", "Scikit-learn", "TensorFlow", "PyTorch", "Tableau",
+    "Power BI", "Spark", "Hadoop", "KAFKA", "Airflow", "MLflow",
+
+    # QA & Testing
+    "Selenium", "Cypress", "Playwright", "Jest", "Mocha", "Appium", "JUnit",
+    "TestNG", "Postman",
+
+    # Design & Collaboration
+    "Figma", "Adobe XD", "Sketch", "Photoshop", "Jira", "Confluence", "Trello",
+    "Git", "Bitbucket", "SVN",
+
+    # Networking & Security
+    "TCP/IP", "UDP", "DNS", "HTTP", "HTTPS", "SSL/TLS", "VPN", "OAuth", "JWT",
+    "Linux", "Unix", "Windows", "MacOS",
 }
 
 LOCATION_MAPPINGS = {
@@ -78,8 +109,8 @@ def normalize_location(location: Optional[str]) -> Optional[str]:
 
 
 def auto_fix_job_posting(job: JobPosting) -> JobPosting:
-    job.stack = list(dict.fromkeys([s.strip() for s in job.stack if s and s.strip()]))
-    job.nice_to_have_stack = list(dict.fromkeys([s.strip() for s in job.nice_to_have_stack if s and s.strip()]))
+    job.stack = list(dict.fromkeys([normalize_technology(s) or s.strip() for s in job.stack if s and s.strip()]))
+    job.nice_to_have_stack = list(dict.fromkeys([normalize_technology(s) or s.strip() for s in job.nice_to_have_stack if s and s.strip()]))
     job.responsibilities = [s.strip() for s in job.responsibilities if s and s.strip()]
     job.requirements = [s.strip() for s in job.requirements if s and s.strip()]
     return job
