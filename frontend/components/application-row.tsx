@@ -108,16 +108,21 @@ export function ApplicationRow({
             </div>
 
             {/* Actions */}
-            <a
-                href={ensureAbsoluteUrl(app.url)}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="p-1.5 hover:bg-secondary rounded"
-            >
-
-                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-            </a>
+            {app.url ? (
+                <a
+                    href={ensureAbsoluteUrl(app.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-1.5 hover:bg-secondary rounded"
+                >
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                </a>
+            ) : (
+                <div className="p-1.5 opacity-50 cursor-not-allowed">
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground/30" />
+                </div>
+            )}
             <button
                 onClick={(e) => {
                     e.stopPropagation()

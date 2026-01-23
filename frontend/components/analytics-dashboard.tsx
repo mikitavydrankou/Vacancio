@@ -44,8 +44,8 @@ export function AnalyticsDashboard({ applications, resumes, onFilterByMissing }:
 
       <div className="flex items-center gap-1.5">
         <Calendar className="h-3.5 w-3.5 text-amber-400" />
-        <span className="text-lg font-semibold text-amber-400">{interviewRate}%</span>
-        <span className="text-muted-foreground">interviews ({interviews})</span>
+        <span className="text-lg font-semibold text-amber-400">{interviews}</span>
+        <span className="text-muted-foreground">interviews</span>
       </div>
 
       <div className="h-5 w-px bg-border" />
