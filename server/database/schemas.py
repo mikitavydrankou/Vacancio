@@ -39,7 +39,8 @@ class Resume(ResumeBase):
 
 
 class JobApplicationBase(BaseModel):
-    url: str
+    url: Optional[str] = None
+
     company: str
     position: str
     location: Optional[str] = None
@@ -80,7 +81,10 @@ class JobApplicationUpdate(BaseModel):
     seniority: Optional[Seniority] = None
     description: Optional[str] = None
     
+    is_archived: Optional[bool] = None
+    url: Optional[str] = None
     status: Optional[ApplicationStatus] = None
+
     is_favorite: Optional[bool] = None
     is_archived: Optional[bool] = None
     responded_at: Optional[datetime] = None

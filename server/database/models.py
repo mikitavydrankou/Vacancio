@@ -64,7 +64,8 @@ class JobApplication(Base):
     resume_id = Column(String, ForeignKey("resumes.id"), nullable=False)
     resume_version = Column(Integer, nullable=False)
     
-    url = Column(String, nullable=False)
+    url = Column(String, nullable=True)
+
     company = Column(String, nullable=False)
     position = Column(String, nullable=False)
     location = Column(String)

@@ -3,7 +3,9 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ExternalLink, Trash2, Star, Archive } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ensureAbsoluteUrl } from "@/lib/utils"
 import { STATUS_CONFIG, STATUSES } from "@/lib/constants/application"
+
 import { RefreshCw } from "lucide-react"
 
 
@@ -86,12 +88,13 @@ export function ApplicationRow({
                 <div className="flex items-center gap-2">
                     {app.url ? (
                         <a
-                            href={app.url}
+                            href={ensureAbsoluteUrl(app.url)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="font-medium text-sm truncate hover:underline text-foreground"
                             onClick={(e) => e.stopPropagation()}
                         >
+
                             {app.position}
                         </a>
                     ) : (
@@ -128,12 +131,13 @@ export function ApplicationRow({
 
             {/* Actions */}
             <a
-                href={app.url}
+                href={ensureAbsoluteUrl(app.url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 className="p-1.5 hover:bg-secondary rounded"
             >
+
                 <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
             </a>
             <button

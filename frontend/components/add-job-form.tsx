@@ -1,8 +1,11 @@
 import { useState, useRef } from "react"
 import type { Resume, JobSource, JobApplication, ResumeProfile } from "@/lib/types"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Upload } from "lucide-react"
+import { Plus, Upload, Link as LinkIcon } from "lucide-react"
+
+
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { uploadResume } from "@/lib/api"
@@ -25,10 +28,12 @@ export function AddJobForm({
     onRefresh,
 }: AddJobFormProps) {
     const { toast } = useToast()
-    const [url, setUrl] = useState("")
+    const [description, setDescription] = useState("")
+    const [jobUrl, setJobUrl] = useState("")
     const [selectedSource, setSelectedSource] = useState<JobSource>("other")
     const [parseSuccess, setParseSuccess] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -44,7 +49,7 @@ export function AddJobForm({
     }
 
     const handleUrlSubmit = async () => {
-        if (!url || !activeProfileId) return
+        if (!description || !activeProfileId) return
 
         // Default to latest version if not selected
         let targetVersion = activeResumeVersion ? parseInt(activeResumeVersion) : null
@@ -59,12 +64,15 @@ export function AddJobForm({
         }
 
         // Capture data
-        const textToProcess = url
+        const textToProcess = description
+        const currentJobUrl = jobUrl
         const profileIdToUse = activeProfileId
         const sourceToUse = selectedSource
 
         // Clear UI immediately
-        setUrl("")
+        setDescription("")
+        setJobUrl("")
+
 
         toast({
             title: "Queued",
@@ -83,7 +91,8 @@ export function AddJobForm({
                 profileId: profileIdToUse,
                 resumeId: targetResume.id,
                 resumeVersion: targetVersion,
-                url: "", // No URL known initially if just text
+                url: currentJobUrl,
+
                 company: "Parsing...",
                 position: "Parsing...",
                 location: "",
@@ -131,12 +140,27 @@ export function AddJobForm({
                     </Select>
                 </div>
 
+                {/* Job URL Input */}
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground ml-1 flex items-center gap-1">
+                        <LinkIcon className="h-3 w-3" /> Job URL (Optional)
+                    </label>
+                    <Input
+                        placeholder="https://..."
+                        value={jobUrl}
+                        onChange={(e) => setJobUrl(e.target.value)}
+                        disabled={!activeProfileId}
+                        className="h-9"
+                    />
+                </div>
+
                 {/* Text Area */}
-                <div className="relative pt-1">
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground ml-1">Job Description</label>
                     <textarea
                         placeholder={activeProfileId ? "Paste job description here..." : "Select a profile to start"}
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
                         disabled={!activeProfileId}
                         className={cn(
                             "w-full px-3 py-2.5 text-sm bg-background border rounded-lg resize-none min-h-[100px]",
@@ -144,17 +168,19 @@ export function AddJobForm({
                             "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/50",
                             parseSuccess && "border-green-500/50"
                         )}
-                        rows={4}
+                        rows={6}
                     />
                 </div>
+
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-1">
                     <Button
                         onClick={handleUrlSubmit}
-                        disabled={!url || !activeProfileId}
+                        disabled={!description || !activeProfileId}
                         className="flex-1 shadow-sm"
                     >
+
                         <Plus className="h-4 w-4 mr-2" />
                         Add Application
                     </Button>
