@@ -1,4 +1,5 @@
 import type { JobApplication, ApplicationStatus, JobSource } from "@/lib/types"
+import { isFieldEmpty } from "./validation"
 
 export interface FilterOptions {
     profileFilter: string
@@ -9,13 +10,6 @@ export interface FilterOptions {
     searchQuery: string
     missingFieldFilter: string
     selectedTechs: string[]
-}
-
-export const isFieldEmpty = (value: unknown): boolean => {
-    if (value === null || value === undefined) return true
-    if (typeof value === "string") return value.trim() === ""
-    if (Array.isArray(value)) return value.length === 0
-    return false
 }
 
 export const getPreFilteredApps = (

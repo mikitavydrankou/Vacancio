@@ -1,6 +1,5 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { X } from "lucide-react"
@@ -12,9 +11,8 @@ import { FlatView } from "@/components/flat-view"
 import { GroupedView } from "@/components/grouped-view"
 import { useApplicationData } from "@/hooks/use-application-data"
 import { useFilterState } from "@/hooks/use-filter-state"
-import { usePersistentState } from "@/hooks/use-persistent-state"
-import { getPreFilteredApps, applyTechFilter, calculateTechStats, calculateLocationStats, isFieldEmpty } from "@/lib/utils/filters"
-import { loadFromStorage } from "@/lib/utils/storage"
+import { useHomePageState } from "@/hooks/use-home-page-state"
+import { getPreFilteredApps, applyTechFilter, calculateTechStats, calculateLocationStats } from "@/lib/utils/filters"
 
 export default function HomePage() {
   const router = useRouter()
@@ -58,44 +56,19 @@ export default function HomePage() {
     setShowFavoritesOnly,
   } = useFilterState()
 
-  // UI state
-  const [activeProfileId, setActiveProfileId] = usePersistentState<string>("activeProfileId", "")
-  const [activeResumeVersion, setActiveResumeVersion] = usePersistentState<string>("activeResumeVersion", "")
-  const [viewMode, setViewMode] = usePersistentState<"flat" | "grouped">("viewMode", "grouped")
-  const [expandedProfiles, setExpandedProfiles] = usePersistentState<string[]>("expandedProfiles", [])
-  const [expandedVersions, setExpandedVersions] = usePersistentState<string[]>("expandedVersions", [])
-
-  // Initialize expanded state on data load
-  // Initialize expanded state on data load
-  useEffect(() => {
-    if (isLoading || profiles.length === 0) return
-
-    // Default selection only if not already set
-    const savedProfileId = loadFromStorage("activeProfileId", "")
-    if (!savedProfileId) {
-      setActiveProfileId(profiles[0].id)
-    }
-
-    // Expand all by default only if no saved state
-    const savedExpandedProfiles = loadFromStorage<string[]>("expandedProfiles", [])
-    if (savedExpandedProfiles.length === 0) {
-      setExpandedProfiles(profiles.map(p => p.id))
-    }
-
-    // Initial versions expansion: latest version for each profile
-    const savedExpandedVersions = loadFromStorage<string[]>("expandedVersions", [])
-    if (savedExpandedVersions.length === 0) {
-      const initialVersions: string[] = []
-      profiles.forEach(p => {
-        const pResumes = resumes.filter(r => r.profileId === p.id)
-        if (pResumes.length > 0) {
-          const latest = pResumes.reduce((prev, curr) => (curr.version > prev.version ? curr : prev))
-          initialVersions.push(`${p.id}-v${latest.version}`)
-        }
-      })
-      setExpandedVersions(initialVersions)
-    }
-  }, [isLoading, profiles, resumes]) // Run when data loads
+  // UI state (extracted to custom hook)
+  const {
+    activeProfileId,
+    setActiveProfileId,
+    activeResumeVersion,
+    setActiveResumeVersion,
+    viewMode,
+    setViewMode,
+    expandedProfiles,
+    expandedVersions,
+    toggleProfile,
+    toggleVersion,
+  } = useHomePageState({ profiles, resumes, isLoading })
 
   // Filtering logic
   const preFilteredApps = getPreFilteredApps(applications, {
@@ -111,21 +84,6 @@ export default function HomePage() {
   const filteredApps = applyTechFilter(preFilteredApps, selectedTechs)
   const sortedTechs = calculateTechStats(preFilteredApps, filteredApps)
   const sortedLocations = calculateLocationStats(applications)
-
-  // Grouping logic
-  const toggleProfile = (id: string) => {
-    const current = new Set(expandedProfiles)
-    if (current.has(id)) current.delete(id)
-    else current.add(id)
-    setExpandedProfiles(Array.from(current))
-  }
-
-  const toggleVersion = (key: string) => {
-    const current = new Set(expandedVersions)
-    if (current.has(key)) current.delete(key)
-    else current.add(key)
-    setExpandedVersions(Array.from(current))
-  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">

@@ -1,14 +1,10 @@
 import type { JobApplication, ApplicationStatus, ResumeProfile } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ExternalLink, Trash2, Star, Archive } from "lucide-react"
+import { ExternalLink, Trash2, Star, Archive, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ensureAbsoluteUrl } from "@/lib/utils"
 import { STATUS_CONFIG, STATUSES } from "@/lib/constants/application"
-
-import { RefreshCw } from "lucide-react"
-
-
+import { formatDate, ensureAbsoluteUrl } from "@/lib/utils/formatting"
 
 interface ApplicationRowProps {
     app: JobApplication
@@ -19,24 +15,6 @@ interface ApplicationRowProps {
     onToggleArchive: (a: JobApplication) => void
     onReparse: (id: string) => void
     onClick: () => void
-}
-
-
-
-
-
-const formatDate = (date: Date) => {
-    const now = new Date()
-    const appDate = new Date(date)
-    const diff = now.getTime() - appDate.getTime()
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-    if (days === 0) return "Today"
-    if (days === 1) return "Yesterday"
-    if (days < 7) return `${days}d ago`
-    if (days < 30) return `${Math.floor(days / 7)}w ago`
-    if (days < 365) return appDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    return appDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export function ApplicationRow({

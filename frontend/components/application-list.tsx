@@ -12,15 +12,12 @@ import { Filter, ChevronRight, X, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { saveApplication } from "@/lib/storage"
 import { STATUS_CONFIG, STATUSES } from "@/lib/constants/application"
-
+import { isFieldEmpty, isAppComplete } from "@/lib/utils/validation"
 
 interface ApplicationListProps {
   applications: JobApplication[]
   onUpdate: () => void
 }
-
-// Status constants moved to @/lib/constants/application
-
 
 type MissingFieldFilter = "all" | "missing_description" | "missing_requirements" | "missing_responsibilities" | "missing_stack" | "complete"
 
@@ -31,20 +28,6 @@ const MISSING_FIELD_CONFIG: Record<MissingFieldFilter, { label: string }> = {
   missing_responsibilities: { label: "No Responsibilities" },
   missing_stack: { label: "No Tech Stack" },
   complete: { label: "Complete" },
-}
-
-const isFieldEmpty = (value: unknown): boolean => {
-  if (value === null || value === undefined) return true
-  if (typeof value === "string") return value.trim() === ""
-  if (Array.isArray(value)) return value.length === 0
-  return false
-}
-
-const isAppComplete = (app: JobApplication): boolean => {
-  return !isFieldEmpty(app.description) &&
-    !isFieldEmpty(app.requirements) &&
-    !isFieldEmpty(app.responsibilities) &&
-    !isFieldEmpty(app.techStack)
 }
 
 export function ApplicationList({ applications, onUpdate }: ApplicationListProps) {

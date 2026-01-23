@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Upload, Link as LinkIcon } from "lucide-react"
 
-
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { uploadResume } from "@/lib/api"
