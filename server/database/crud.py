@@ -88,8 +88,13 @@ def update_application(db: Session, application_id: str, updates: schemas.JobApp
         return None
     
     update_data = updates.dict(exclude_unset=True)
+    # Ensure critical fields aren't accidentally set to None if present in update_data
+    if "status" in update_data and update_data["status"] is None:
+        del update_data["status"]
+        
     for key, value in update_data.items():
         setattr(db_app, key, value)
+
     
     db.add(db_app)
     db.commit()

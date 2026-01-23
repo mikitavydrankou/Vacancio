@@ -19,8 +19,10 @@ interface GroupedViewProps {
     onDelete: (id: string) => void
     onToggleFavorite: (app: JobApplication) => void
     onToggleArchive: (app: JobApplication) => void
+    onReparse: (id: string) => void
     onApplicationClick: (id: string) => void
 }
+
 
 function getVersionsForProfile(profileId: string, resumes: Resume[]) {
     const pResumes = resumes.filter(r => r.profileId === profileId).map(r => r.version)
@@ -43,8 +45,10 @@ export function GroupedView({
     onDelete,
     onToggleFavorite,
     onToggleArchive,
+    onReparse,
     onApplicationClick,
 }: GroupedViewProps) {
+
     return (
         <div className="space-y-4">
             {profiles.map(profile => {
@@ -98,7 +102,9 @@ export function GroupedView({
                                                             onDelete={onDelete}
                                                             onToggleFavorite={onToggleFavorite}
                                                             onToggleArchive={onToggleArchive}
+                                                            onReparse={onReparse}
                                                             onClick={() => onApplicationClick(app.id)}
+
                                                         />
                                                     ))}
                                                 </div>

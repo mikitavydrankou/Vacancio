@@ -134,7 +134,7 @@ export function AddJobForm({
                 {/* Text Area */}
                 <div className="relative pt-1">
                     <textarea
-                        placeholder={activeProfileId ? "Paste job URL or description here..." : "Select a profile to start"}
+                        placeholder={activeProfileId ? "Paste job description here..." : "Select a profile to start"}
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         disabled={!activeProfileId}

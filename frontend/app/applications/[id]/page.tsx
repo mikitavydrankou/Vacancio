@@ -2,36 +2,24 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { fetchApplication, updateApplicationStatus, updateApplication } from "@/lib/api"
+import { fetchApplication, updateApplicationStatus, updateApplication, reparseApplication } from "@/lib/api"
 import type { JobApplication, ApplicationStatus } from "@/lib/types"
+import { STATUS_CONFIG, STATUSES } from "@/lib/constants/application"
+
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, ExternalLink, Calendar, MapPin, Building2, Banknote, Briefcase, GraduationCap, Laptop, CheckCircle2, Edit, Save, X } from "lucide-react"
+import { ArrowLeft, ExternalLink, Calendar, MapPin, Building2, Banknote, Briefcase, GraduationCap, Laptop, CheckCircle2, Edit, Save, X, RefreshCw } from "lucide-react"
+
 import { cn, ensureAbsoluteUrl } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getSourceColor, getSourceLabel } from "@/lib/job-parser"
 import { EditTagsField } from "@/components/edit-tags-field"
 import { EditListField } from "@/components/edit-list-field"
 
-const STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: string }> = {
-  parsing: { label: "Parsing", color: "bg-purple-500/10 text-purple-600 border-purple-200 dark:border-purple-900" },
-  no_response: { label: "No Response", color: "bg-zinc-500/10 text-zinc-500 border-zinc-200 dark:border-zinc-800" },
-  screening: { label: "Screening", color: "bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-900" },
-  interview: { label: "Interview", color: "bg-amber-500/10 text-amber-600 border-amber-200 dark:border-amber-900" },
-  offer: { label: "Offer", color: "bg-green-500/10 text-green-600 border-green-200 dark:border-green-900" },
-  rejected: { label: "Rejected", color: "bg-red-500/10 text-red-600 border-red-200 dark:border-red-900" },
-}
+// Status config moved to @/lib/constants/application
 
-const STATUSES: ApplicationStatus[] = [
-  "parsing",
-  "no_response",
-  "screening",
-  "interview",
-  "offer",
-  "rejected",
-]
 
 export default function ApplicationDetailPage() {
   const params = useParams<{ id: string }>()
@@ -52,6 +40,24 @@ export default function ApplicationDetailPage() {
       })
       .finally(() => setLoading(false))
   }, [params.id])
+
+  useEffect(() => {
+    if (!app || app.status !== "parsing") return
+
+    const intervalId = setInterval(async () => {
+      try {
+        const updated = await fetchApplication(app.id)
+        if (updated.status !== "parsing") {
+          setApp(updated)
+        }
+      } catch (err) {
+        console.error("Polling failed", err)
+      }
+    }, 3000)
+
+    return () => clearInterval(intervalId)
+  }, [app?.status, app?.id])
+
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>
@@ -110,6 +116,22 @@ export default function ApplicationDetailPage() {
     }
   }
 
+  const handleReparse = async () => {
+    if (!app) return
+    setIsSaving(true)
+    try {
+      const updated = await reparseApplication(app.id)
+      setApp(updated)
+      // Since it's parsing in background, we might want to poll or just show status "parsing"
+    } catch (error) {
+      console.error("Failed to re-parse:", error)
+      alert("Failed to trigger re-parsing.")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+
   const handleCancel = () => {
     setIsEditing(false)
     setEditedApp(null)
@@ -160,8 +182,9 @@ export default function ApplicationDetailPage() {
                   </div>
                 ) : (
                   <>
-                    <h1 className="text-xl font-bold leading-tight">
+                    <h1 className="text-xl font-bold leading-tight flex items-center gap-2">
                       {app.url ? (
+
                         <a
                           href={ensureAbsoluteUrl(app.url)}
                           target="_blank"
@@ -173,7 +196,18 @@ export default function ApplicationDetailPage() {
                       ) : (
                         <span>{app.position}</span>
                       )}
+                      {app.status === 'failed' && (
+                        <Badge variant="destructive" className="text-[10px] h-5 px-2 animate-pulse">
+                          Reparse required
+                        </Badge>
+                      )}
+                      {app.status === 'parsing' && (
+                        <Badge variant="outline" className="text-[10px] h-5 px-2 border-amber-500/50 text-amber-600 bg-amber-500/10 animate-pulse">
+                          Parsing...
+                        </Badge>
+                      )}
                     </h1>
+
                     <div className="flex items-center gap-2 text-muted-foreground text-sm mt-1">
                       <Building2 className="h-4 w-4" />
                       <span>{app.company}</span>
@@ -213,7 +247,7 @@ export default function ApplicationDetailPage() {
                     </a>
                   )}
                   <Select value={app.status} onValueChange={(v) => handleStatusChange(v as ApplicationStatus)}>
-                    <SelectTrigger className={cn("w-[140px] h-9 border", STATUS_CONFIG[app.status].color)}>
+                    <SelectTrigger className={cn("w-[140px] h-9 border", STATUS_CONFIG[app.status]?.color || STATUS_CONFIG.no_response.color)}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -224,6 +258,14 @@ export default function ApplicationDetailPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {app.rawData && (
+                    <Button onClick={handleReparse} variant="outline" size="sm" disabled={isSaving || app.status === "parsing"}>
+                      <RefreshCw className={cn("h-4 w-4 mr-2", app.status === "parsing" && "animate-spin")} />
+                      {app.status === "parsing" ? "Parsing..." : "Re-parse"}
+                    </Button>
+                  )}
+
+
                   <Button onClick={handleEdit} variant="outline" size="sm">
                     <Edit className="h-4 w-4 mr-2" />
                     Edit

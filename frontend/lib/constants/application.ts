@@ -16,7 +16,9 @@ export const STATUSES: ApplicationStatus[] = [
     "interview",
     "offer",
     "rejected",
+    "failed",
 ]
+
 
 export const SOURCES: JobSource[] = ["pracuj", "nofluffjobs", "justjoin", "indeed", "linkedin", "other"]
 

@@ -73,8 +73,9 @@ export const applyTechFilter = (apps: JobApplication[], selectedTechs: string[])
     return apps
         .filter((app) => {
             if (selectedTechs.length === 0) return true
-            return selectedTechs.every((t) => app.techStack.includes(t) || app.niceToHaveStack?.includes(t))
+            return selectedTechs.every((t) => (app.techStack || []).includes(t) || (app.niceToHaveStack || []).includes(t))
         })
+
         .sort((a, b) => {
             const timeA = a.appliedAt ? new Date(a.appliedAt).getTime() : 0
             const timeB = b.appliedAt ? new Date(b.appliedAt).getTime() : 0
@@ -89,20 +90,22 @@ export const calculateTechStats = (
     // 1. Get universe of techs from pre-filtered apps (to show 0s)
     const allTechs = new Set<string>()
     preFilteredApps.forEach((app) => {
-        app.techStack.forEach((tech) => allTechs.add(tech))
-        app.niceToHaveStack?.forEach((tech) => allTechs.add(tech))
-    })
+        (app.techStack || []).forEach((tech) => allTechs.add(tech));
+        (app.niceToHaveStack || []).forEach((tech) => allTechs.add(tech));
+    });
 
     // 2. Get counts from currently filtered apps
-    const currentCounts = new Map<string, number>()
+    const currentCounts = new Map<string, number>();
     filteredApps.forEach((app) => {
-        app.techStack.forEach((tech) => {
-            currentCounts.set(tech, (currentCounts.get(tech) || 0) + 1)
-        })
-        app.niceToHaveStack?.forEach((tech) => {
-            currentCounts.set(tech, (currentCounts.get(tech) || 0) + 1)
-        })
-    })
+        (app.techStack || []).forEach((tech) => {
+            currentCounts.set(tech, (currentCounts.get(tech) || 0) + 1);
+        });
+        (app.niceToHaveStack || []).forEach((tech) => {
+            currentCounts.set(tech, (currentCounts.get(tech) || 0) + 1);
+        });
+    });
+
+
 
     // 3. Combine
     return Array.from(allTechs).map(tech => {

@@ -26,16 +26,17 @@ export default function HomePage() {
     applications,
     isLoading,
     setProfiles,
-    setExpandedProfiles: setExpandedProfilesData,
-    setExpandedVersions: setExpandedVersionsData,
     loadAllData,
     refreshData,
+
     handleStatusChange,
     handleDelete,
     handleToggleFavorite,
     handleToggleArchive,
     handleCreateApplication,
+    handleReparse,
   } = useApplicationData()
+
 
   // Filter state
   const {
@@ -222,7 +223,9 @@ export default function HomePage() {
               onDelete={handleDelete}
               onToggleFavorite={handleToggleFavorite}
               onToggleArchive={handleToggleArchive}
+              onReparse={handleReparse}
               onApplicationClick={(id) => router.push(`/applications/${id}`)}
+
             />
           ) : (
             <GroupedView
@@ -241,8 +244,10 @@ export default function HomePage() {
               onDelete={handleDelete}
               onToggleFavorite={handleToggleFavorite}
               onToggleArchive={handleToggleArchive}
+              onReparse={handleReparse}
               onApplicationClick={(id) => router.push(`/applications/${id}`)}
             />
+
           )}
         </div>
       </main>

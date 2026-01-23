@@ -8,8 +8,10 @@ import {
     updateApplicationStatus,
     deleteApplication,
     toggleFavorite,
-    toggleArchive
+    toggleArchive,
+    reparseApplication
 } from "@/lib/api"
+
 import { loadFromStorage } from "@/lib/utils/storage"
 
 export function useApplicationData() {
@@ -139,6 +141,20 @@ export function useApplicationData() {
             }
         }
     }
+    const handleReparse = async (id: string) => {
+        // optimistic update
+        setApplications(prev => prev.map(a => a.id === id ? { ...a, status: "parsing" } : a))
+        try {
+            const updated = await reparseApplication(id)
+            if (isMounted.current) {
+                setApplications(prev => prev.map(a => a.id === id ? updated : a))
+            }
+        } catch (err) {
+            console.error(err)
+            // we could revert here, but polling will likely fix it or it will stay in error
+            refreshData()
+        }
+    }
 
     const handleCreateApplication = async (app: Partial<JobApplication>) => {
         await createApplication(app)
@@ -160,5 +176,7 @@ export function useApplicationData() {
         handleToggleFavorite,
         handleToggleArchive,
         handleCreateApplication,
+        handleReparse,
     }
 }
+

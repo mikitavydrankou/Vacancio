@@ -4,6 +4,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ExternalLink, Trash2, Star, Archive } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { STATUS_CONFIG, STATUSES } from "@/lib/constants/application"
+import { RefreshCw } from "lucide-react"
+
+
 
 interface ApplicationRowProps {
     app: JobApplication
@@ -12,8 +15,13 @@ interface ApplicationRowProps {
     onDelete: (id: string) => void
     onToggleFavorite: (a: JobApplication) => void
     onToggleArchive: (a: JobApplication) => void
+    onReparse: (id: string) => void
     onClick: () => void
 }
+
+
+
+
 
 const formatDate = (date: Date) => {
     const now = new Date()
@@ -36,15 +44,27 @@ export function ApplicationRow({
     onDelete,
     onToggleFavorite,
     onToggleArchive,
-    onClick
+    onReparse,
+    onClick,
 }: ApplicationRowProps) {
+
+
+
+    const handleReparse = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        onReparse(app.id)
+    }
+
+
     return (
         <div
             className={cn(
                 "group flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all cursor-pointer bg-card",
                 "border-transparent hover:border-border hover:bg-secondary/50",
-                app.status === 'parsing' && "border-amber-500/20 bg-amber-500/5"
+                app.status === 'parsing' && "border-amber-500/20 bg-amber-500/5",
+                app.status === 'failed' && "border-red-500/30 bg-red-500/5 hover:border-red-500/50"
             )}
+
             onClick={(e) => {
                 if ((e.target as HTMLElement).closest("button") || (e.target as HTMLElement).closest("[role='combobox']") || (e.target as HTMLElement).closest("a")) return
                 onClick()
@@ -78,7 +98,19 @@ export function ApplicationRow({
                         <span className="font-medium text-sm truncate">{app.position}</span>
                     )}
                     <span className="text-muted-foreground text-sm truncate">at {app.company}</span>
+                    {app.status === 'failed' && (
+                        <Badge variant="destructive" className="ml-2 text-[10px] h-4 px-1.5 animate-pulse">
+                            Reparse required
+                        </Badge>
+                    )}
+                    {app.status === 'parsing' && (
+                        <Badge variant="outline" className="ml-2 text-[10px] h-4 px-1.5 border-amber-500/50 text-amber-600 bg-amber-500/10 animate-pulse">
+                            Parsing...
+                        </Badge>
+                    )}
                 </div>
+
+
                 <div className="flex items-center gap-1 mt-0.5">
                     {(app.techStack || []).slice(0, 4).map((tech) => (
                         <span key={tech} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">{tech}</span>
@@ -114,6 +146,16 @@ export function ApplicationRow({
             >
                 <Archive className="h-3.5 w-3.5 text-muted-foreground hover:text-amber-400" />
             </button>
+            {app.rawData && (
+                <button
+                    onClick={handleReparse}
+                    title="Re-parse"
+                    className="p-1.5 hover:bg-blue-500/10 rounded"
+                >
+                    <RefreshCw className={cn("h-3.5 w-3.5 text-muted-foreground hover:text-blue-500", app.status === 'parsing' && "animate-spin")} />
+                </button>
+            )}
+
             <button
                 onClick={(e) => {
                     e.stopPropagation()

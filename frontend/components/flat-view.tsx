@@ -8,8 +8,10 @@ interface FlatViewProps {
     onDelete: (id: string) => void
     onToggleFavorite: (app: JobApplication) => void
     onToggleArchive: (app: JobApplication) => void
+    onReparse: (id: string) => void
     onApplicationClick: (id: string) => void
 }
+
 
 export function FlatView({
     applications,
@@ -18,8 +20,10 @@ export function FlatView({
     onDelete,
     onToggleFavorite,
     onToggleArchive,
+    onReparse,
     onApplicationClick,
 }: FlatViewProps) {
+
     return (
         <div className="space-y-2">
             {applications.map(app => (
@@ -31,7 +35,9 @@ export function FlatView({
                     onDelete={onDelete}
                     onToggleFavorite={onToggleFavorite}
                     onToggleArchive={onToggleArchive}
+                    onReparse={onReparse}
                     onClick={() => onApplicationClick(app.id)}
+
                 />
             ))}
             {applications.length === 0 && (

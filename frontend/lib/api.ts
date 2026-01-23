@@ -8,6 +8,29 @@ const parseDate = (date: any): Date => {
     return isNaN(d.getTime()) ? new Date() : d
 }
 
+function mapApplication(a: any): JobApplication {
+    return {
+        ...a,
+        profileId: a.profile_id,
+        resumeId: a.resume_id,
+        resumeVersion: a.resume_version,
+        appliedAt: parseDate(a.applied_at),
+        respondedAt: a.responded_at ? parseDate(a.responded_at) : undefined,
+        interviewDate: a.interview_date ? parseDate(a.interview_date) : undefined,
+        rejectedAt: a.rejected_at ? parseDate(a.rejected_at) : undefined,
+        techStack: a.tech_stack || [],
+        niceToHaveStack: a.nice_to_have_stack || [],
+        responsibilities: a.responsibilities || [],
+        requirements: a.requirements || [],
+        workMode: a.work_mode,
+        employmentType: a.employment_type,
+        rawData: a.raw_data,
+        isFavorite: !!a.is_favorite,
+        isArchived: !!a.is_archived
+    }
+}
+
+
 export async function fetchProfiles(): Promise<ResumeProfile[]> {
     const res = await fetch(`${API_Base}/profiles`)
     if (!res.ok) throw new Error("Failed to fetch profiles")
@@ -78,53 +101,24 @@ export async function fetchApplications(profileId?: string, resumeVersion?: numb
     if (resumeVersion) url += `resume_version=${resumeVersion}&`
 
     const res = await fetch(url)
-    if (!res.ok) throw new Error("Failed to fetch applications")
+    if (!res.ok) {
+        const errorBody = await res.text().catch(() => "No error body")
+        console.error(`Failed to fetch applications: ${res.status} ${res.statusText}`, errorBody)
+        throw new Error("Failed to fetch applications")
+    }
+
     const data = await res.json()
-    return data.map((a: any) => ({
-        ...a,
-        profileId: a.profile_id,
-        resumeId: a.resume_id,
-        resumeVersion: a.resume_version,
-        appliedAt: parseDate(a.applied_at),
-        respondedAt: a.responded_at ? parseDate(a.responded_at) : undefined,
-        interviewDate: a.interview_date ? parseDate(a.interview_date) : undefined,
-        rejectedAt: a.rejected_at ? parseDate(a.rejected_at) : undefined,
-        techStack: a.tech_stack || [],
-        niceToHaveStack: a.nice_to_have_stack || [],
-        responsibilities: a.responsibilities || [],
-        requirements: a.requirements || [],
-        workMode: a.work_mode,
-        employmentType: a.employment_type,
-        rawData: a.raw_data,
-        isFavorite: !!a.is_favorite,
-        isArchived: !!a.is_archived
-    }))
+    return data.map(mapApplication)
 }
+
 
 export async function fetchApplication(id: string): Promise<JobApplication> {
     const res = await fetch(`${API_Base}/applications/${id}`)
     if (!res.ok) throw new Error("Failed to fetch application")
     const data = await res.json()
-    return {
-        ...data,
-        profileId: data.profile_id,
-        resumeId: data.resume_id,
-        resumeVersion: data.resume_version,
-        appliedAt: parseDate(data.applied_at),
-        respondedAt: data.responded_at ? parseDate(data.responded_at) : undefined,
-        interviewDate: data.interview_date ? parseDate(data.interview_date) : undefined,
-        rejectedAt: data.rejected_at ? parseDate(data.rejected_at) : undefined,
-        techStack: data.tech_stack || [],
-        niceToHaveStack: data.nice_to_have_stack || [],
-        responsibilities: data.responsibilities || [],
-        requirements: data.requirements || [],
-        workMode: data.work_mode,
-        employmentType: data.employment_type,
-        rawData: data.raw_data,
-        isFavorite: !!data.is_favorite,
-        isArchived: !!data.is_archived
-    }
+    return mapApplication(data)
 }
+
 
 export async function createApplication(app: Partial<JobApplication>): Promise<JobApplication> {
     // Map camelCase to snake_case for API
@@ -156,20 +150,9 @@ export async function createApplication(app: Partial<JobApplication>): Promise<J
     })
     if (!res.ok) throw new Error("Failed to create application")
     const data = await res.json()
-    return {
-        ...data,
-        profileId: data.profile_id,
-        resumeId: data.resume_id,
-        resumeVersion: data.resume_version,
-        appliedAt: parseDate(data.applied_at),
-        techStack: data.tech_stack || [],
-        niceToHaveStack: data.nice_to_have_stack || [],
-        responsibilities: data.responsibilities || [],
-        requirements: data.requirements || [],
-        workMode: data.work_mode,
-        employmentType: data.employment_type
-    }
+    return mapApplication(data)
 }
+
 
 export async function updateApplicationStatus(id: string, status: ApplicationStatus): Promise<void> {
     const payload: any = { status }
@@ -211,26 +194,9 @@ export async function updateApplication(id: string, updates: Partial<JobApplicat
         throw new Error(`Failed to update application: ${errorText}`)
     }
     const data = await res.json()
-    return {
-        ...data,
-        profileId: data.profile_id,
-        resumeId: data.resume_id,
-        resumeVersion: data.resume_version,
-        appliedAt: parseDate(data.applied_at),
-        respondedAt: data.responded_at ? parseDate(data.responded_at) : undefined,
-        interviewDate: data.interview_date ? parseDate(data.interview_date) : undefined,
-        rejectedAt: data.rejected_at ? parseDate(data.rejected_at) : undefined,
-        techStack: data.tech_stack || [],
-        niceToHaveStack: data.nice_to_have_stack || [],
-        responsibilities: data.responsibilities || [],
-        requirements: data.requirements || [],
-        workMode: data.work_mode,
-        employmentType: data.employment_type,
-        rawData: data.raw_data,
-        isFavorite: !!data.is_favorite,
-        isArchived: !!data.is_archived
-    }
+    return mapApplication(data)
 }
+
 
 export async function deleteApplication(id: string): Promise<void> {
     const res = await fetch(`${API_Base}/applications/${id}`, { method: "DELETE" })
@@ -254,3 +220,13 @@ export async function toggleArchive(id: string, isArchived: boolean): Promise<vo
     })
     if (!res.ok) throw new Error("Failed to toggle archive")
 }
+
+export async function reparseApplication(id: string): Promise<JobApplication> {
+    const res = await fetch(`${API_Base}/applications/${id}/reparse`, {
+        method: "POST"
+    })
+    if (!res.ok) throw new Error("Failed to trigger re-parsing")
+    const data = await res.json()
+    return mapApplication(data)
+}
+

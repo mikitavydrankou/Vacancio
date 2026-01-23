@@ -11,31 +11,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Filter, ChevronRight, X, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { saveApplication } from "@/lib/storage"
+import { STATUS_CONFIG, STATUSES } from "@/lib/constants/application"
+
 
 interface ApplicationListProps {
   applications: JobApplication[]
   onUpdate: () => void
 }
 
-const STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: string }> = {
-  parsing: { label: "Parsing", color: "bg-purple-500/20 text-purple-400" },
-  no_response: { label: "No Response", color: "bg-zinc-500/20 text-zinc-400" },
-  screening: { label: "Screening", color: "bg-blue-500/20 text-blue-400" },
-  interview: { label: "Interview", color: "bg-amber-500/20 text-amber-400" },
-  offer: { label: "Offer", color: "bg-green-500/20 text-green-400" },
-  rejected: { label: "Rejected", color: "bg-red-500/20 text-red-400" },
-  failed: { label: "Error", color: "bg-red-500/20 text-red-400" },
-}
+// Status constants moved to @/lib/constants/application
 
-// User-selectable statuses (excludes "parsing" which is only for internal use)
-const STATUSES: ApplicationStatus[] = [
-  "no_response",
-  "screening",
-  "interview",
-  "offer",
-  "rejected",
-  "failed",
-]
 
 type MissingFieldFilter = "all" | "missing_description" | "missing_requirements" | "missing_responsibilities" | "missing_stack" | "complete"
 

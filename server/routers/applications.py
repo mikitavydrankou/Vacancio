@@ -122,3 +122,21 @@ def delete_application(app_id: str, db: Session = Depends(get_db)):
     if not db_app:
         raise HTTPException(status_code=404, detail="Application not found")
     return {"ok": True}
+@router.post("/{app_id}/reparse", response_model=schemas.JobApplication)
+def reparse_application(app_id: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    db_app = crud.get_application(db, app_id)
+    if not db_app:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    if not db_app.raw_data:
+        raise HTTPException(status_code=400, detail="No raw data available for re-parsing")
+    
+    # Reset status to parsing
+    updates = schemas.JobApplicationUpdate(status=models.ApplicationStatus.parsing)
+    db_app = crud.update_application(db, app_id, updates)
+    
+    # Trigger background parsing
+    background_tasks.add_task(process_application_background, app_id)
+    
+    return db_app
+
