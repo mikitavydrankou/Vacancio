@@ -24,6 +24,7 @@ const STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: string }>
   interview: { label: "Interview", color: "bg-amber-500/20 text-amber-400" },
   offer: { label: "Offer", color: "bg-green-500/20 text-green-400" },
   rejected: { label: "Rejected", color: "bg-red-500/20 text-red-400" },
+  failed: { label: "Error", color: "bg-red-500/20 text-red-400" },
 }
 
 // User-selectable statuses (excludes "parsing" which is only for internal use)
@@ -33,6 +34,7 @@ const STATUSES: ApplicationStatus[] = [
   "interview",
   "offer",
   "rejected",
+  "failed",
 ]
 
 type MissingFieldFilter = "all" | "missing_description" | "missing_requirements" | "missing_responsibilities" | "missing_stack" | "complete"
@@ -262,7 +264,7 @@ export function ApplicationList({ applications, onUpdate }: ApplicationListProps
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                      {getPreviewTechStack(app.techStack).map((tech) => (
+                      {(app.techStack || []).slice(0, 3).map((tech) => (
                         <Badge
                           key={tech}
                           variant="secondary"
@@ -274,8 +276,8 @@ export function ApplicationList({ applications, onUpdate }: ApplicationListProps
                           {tech}
                         </Badge>
                       ))}
-                      {app.techStack.length > 3 && (
-                        <span className="text-xs text-muted-foreground">+{app.techStack.length - 3}</span>
+                      {(app.techStack || []).length > 3 && (
+                        <span className="text-xs text-muted-foreground">+{(app.techStack || []).length - 3}</span>
                       )}
                     </div>
                   </Link>
@@ -289,7 +291,7 @@ export function ApplicationList({ applications, onUpdate }: ApplicationListProps
                       }}
                     >
                       <SelectTrigger
-                        className={cn("h-7 text-xs border-0 w-32", STATUS_CONFIG[app.status].color)}
+                        className={cn("h-7 text-xs border-0 w-32", STATUS_CONFIG[app.status]?.color || "bg-zinc-500/20 text-zinc-400")}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <SelectValue />

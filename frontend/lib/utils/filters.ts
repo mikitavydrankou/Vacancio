@@ -48,10 +48,10 @@ export const getPreFilteredApps = (
                 app.location?.toLowerCase().includes(query) ||
                 app.description?.toLowerCase().includes(query) ||
                 app.salary?.toLowerCase().includes(query) ||
-                app.techStack.some(tech => tech.toLowerCase().includes(query)) ||
-                app.niceToHaveStack?.some(tech => tech.toLowerCase().includes(query)) ||
-                app.requirements?.some(req => req.toLowerCase().includes(query)) ||
-                app.responsibilities?.some(resp => resp.toLowerCase().includes(query)) ||
+                (app.techStack || []).some(tech => tech.toLowerCase().includes(query)) ||
+                (app.niceToHaveStack || []).some(tech => tech.toLowerCase().includes(query)) ||
+                (app.requirements || []).some(req => req.toLowerCase().includes(query)) ||
+                (app.responsibilities || []).some(resp => resp.toLowerCase().includes(query)) ||
                 app.rawData?.toLowerCase().includes(query)
             )
         })
@@ -75,7 +75,11 @@ export const applyTechFilter = (apps: JobApplication[], selectedTechs: string[])
             if (selectedTechs.length === 0) return true
             return selectedTechs.every((t) => app.techStack.includes(t) || app.niceToHaveStack?.includes(t))
         })
-        .sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime())
+        .sort((a, b) => {
+            const timeA = a.appliedAt ? new Date(a.appliedAt).getTime() : 0
+            const timeB = b.appliedAt ? new Date(b.appliedAt).getTime() : 0
+            return timeB - timeA
+        })
 }
 
 export const calculateTechStats = (

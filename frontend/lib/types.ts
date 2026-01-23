@@ -58,6 +58,7 @@ export type ApplicationStatus =
   | "interview"
   | "offer"
   | "rejected"
+  | "failed"
 
 export type JobSource = "pracuj" | "nofluffjobs" | "justjoin" | "indeed" | "linkedin" | "other"
 

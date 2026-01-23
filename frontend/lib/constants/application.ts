@@ -7,6 +7,7 @@ export const STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: st
     interview: { label: "Interview", color: "bg-amber-500/20 text-amber-400" },
     offer: { label: "Offer", color: "bg-green-500/20 text-green-400" },
     rejected: { label: "Rejected", color: "bg-red-500/20 text-red-400" },
+    failed: { label: "Error", color: "bg-red-500/20 text-red-400 border-red-500/50" },
 }
 
 export const STATUSES: ApplicationStatus[] = [

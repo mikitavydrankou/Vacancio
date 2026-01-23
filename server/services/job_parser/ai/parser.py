@@ -102,11 +102,29 @@ def _extract_source(url: str) -> str:
 
 
 def _extract_json(text: str) -> str:
+    """Extract JSON from LLM response text, handling code blocks and common noise."""
+    text = text.strip()
+    
+    # Try to find JSON code block
     if "```json" in text:
-        return text.split("```json")[1].split("```")[0].strip()
-    elif "```" in text:
-        return text.split("```")[1].split("```")[0].strip()
-    return text.strip()
+        try:
+            return text.split("```json")[1].split("```")[0].strip()
+        except IndexError:
+            pass
+    
+    if "```" in text:
+        try:
+            return text.split("```")[1].split("```")[0].strip()
+        except IndexError:
+            pass
+
+    # Find the first { and last }
+    start = text.find('{')
+    end = text.rfind('}')
+    if start != -1 and end != -1 and end > start:
+        return text[start:end+1]
+
+    return text
 
 
 def _normalize_enums(data: dict) -> dict:
@@ -115,7 +133,7 @@ def _normalize_enums(data: dict) -> dict:
         data["work_mode"] = wm
     
     if data.get("employment_type"):
-        et = data["employment_type"].lower()
+        et = str(data["employment_type"]).lower()
         employment_map = {
             "full": "full-time",
             "part": "part-time",
@@ -123,10 +141,15 @@ def _normalize_enums(data: dict) -> dict:
             "intern": "internship",
             "contract": "contract"
         }
+        found = False
         for key, value in employment_map.items():
             if key in et:
                 data["employment_type"] = value
+                found = True
                 break
+        if not found:
+            # If nothing matches, it's better to set to None than keep garbage
+            data["employment_type"] = None
     
     if data.get("salary"):
         salary = data["salary"]

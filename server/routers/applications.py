@@ -44,14 +44,14 @@ def process_application_background(app_id: str):
         logger.info(f"✅ Parsing complete for {app_id}: {parsed.job_title} @ {parsed.company}")
         
         updates = schemas.JobApplicationUpdate(
-            company=parsed.company or "Unknown",
-            position=parsed.job_title or "Unknown Position",
-            location=parsed.location,
+            company=(parsed.company or "Unknown").strip()[:100],
+            position=(parsed.job_title or "Unknown Position").strip()[:100],
+            location=(parsed.location or "").strip()[:100],
             salary=_format_salary(parsed.salary),
-            tech_stack=parsed.stack,
-            nice_to_have_stack=parsed.nice_to_have_stack,
-            responsibilities=parsed.responsibilities,
-            requirements=parsed.requirements,
+            tech_stack=parsed.stack or [],
+            nice_to_have_stack=parsed.nice_to_have_stack or [],
+            responsibilities=parsed.responsibilities or [],
+            requirements=parsed.requirements or [],
             description=parsed.project_description,
             work_mode=parsed.work_mode,
             employment_type=parsed.employment_type,

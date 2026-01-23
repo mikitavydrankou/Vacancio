@@ -80,7 +80,7 @@ export function ApplicationRow({
                     <span className="text-muted-foreground text-sm truncate">at {app.company}</span>
                 </div>
                 <div className="flex items-center gap-1 mt-0.5">
-                    {app.techStack.slice(0, 4).map((tech) => (
+                    {(app.techStack || []).slice(0, 4).map((tech) => (
                         <span key={tech} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">{tech}</span>
                     ))}
                 </div>
@@ -124,11 +124,11 @@ export function ApplicationRow({
                 <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
             </button>
             <Select value={app.status} onValueChange={(v) => onStatusChange(app, v as ApplicationStatus)}>
-                <SelectTrigger className={cn("h-7 text-xs w-28 border-0 shadow-none", STATUS_CONFIG[app.status].color)}>
+                <SelectTrigger className={cn("h-7 text-xs w-28 border-0 shadow-none", STATUS_CONFIG[app.status]?.color || STATUS_CONFIG.no_response.color)}>
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                    {STATUSES.map((s) => (
+                    {(Object.keys(STATUS_CONFIG) as ApplicationStatus[]).map((s) => (
                         <SelectItem key={s} value={s}>
                             <span className="text-xs">{STATUS_CONFIG[s].label}</span>
                         </SelectItem>

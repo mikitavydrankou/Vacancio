@@ -2,13 +2,19 @@ import { JobApplication, Resume, ResumeProfile, ApplicationStatus } from "./type
 
 const API_Base = process.env.NEXT_PUBLIC_BACKEND_URL || (typeof window !== "undefined" ? `http://${window.location.hostname}:8000` : "http://localhost:8000")
 
+const parseDate = (date: any): Date => {
+    if (!date) return new Date()
+    const d = new Date(date)
+    return isNaN(d.getTime()) ? new Date() : d
+}
+
 export async function fetchProfiles(): Promise<ResumeProfile[]> {
     const res = await fetch(`${API_Base}/profiles`)
     if (!res.ok) throw new Error("Failed to fetch profiles")
     const data = await res.json()
     return data.map((p: any) => ({
         ...p,
-        createdAt: new Date(p.created_at)
+        createdAt: parseDate(p.created_at)
     }))
 }
 
@@ -20,7 +26,7 @@ export async function createProfile(name: string): Promise<ResumeProfile> {
     })
     if (!res.ok) throw new Error("Failed to create profile")
     const data = await res.json()
-    return { ...data, createdAt: new Date(data.created_at) }
+    return { ...data, createdAt: parseDate(data.created_at) }
 }
 
 export async function deleteProfile(id: string): Promise<void> {
@@ -36,7 +42,7 @@ export async function fetchResumes(profileId?: string): Promise<Resume[]> {
     return data.map((r: any) => ({
         ...r,
         profileId: r.profile_id, // Map snake_case to camelCase
-        uploadedAt: new Date(r.uploaded_at),
+        uploadedAt: parseDate(r.uploaded_at),
         filePath: r.file_path,
         fileName: r.name + ".pdf", // Backend stores name without ext usually, or we adjust
         fileData: "" // We don't fetch file data by default anymore
@@ -61,7 +67,7 @@ export async function uploadResume(profileId: string, file: File): Promise<Resum
     return {
         ...data,
         profileId: data.profile_id,
-        uploadedAt: new Date(data.uploaded_at),
+        uploadedAt: parseDate(data.uploaded_at),
         fileName: file.name
     }
 }
@@ -79,10 +85,10 @@ export async function fetchApplications(profileId?: string, resumeVersion?: numb
         profileId: a.profile_id,
         resumeId: a.resume_id,
         resumeVersion: a.resume_version,
-        appliedAt: new Date(a.applied_at),
-        respondedAt: a.responded_at ? new Date(a.responded_at) : undefined,
-        interviewDate: a.interview_date ? new Date(a.interview_date) : undefined,
-        rejectedAt: a.rejected_at ? new Date(a.rejected_at) : undefined,
+        appliedAt: parseDate(a.applied_at),
+        respondedAt: a.responded_at ? parseDate(a.responded_at) : undefined,
+        interviewDate: a.interview_date ? parseDate(a.interview_date) : undefined,
+        rejectedAt: a.rejected_at ? parseDate(a.rejected_at) : undefined,
         techStack: a.tech_stack || [],
         niceToHaveStack: a.nice_to_have_stack || [],
         responsibilities: a.responsibilities || [],
@@ -104,10 +110,10 @@ export async function fetchApplication(id: string): Promise<JobApplication> {
         profileId: data.profile_id,
         resumeId: data.resume_id,
         resumeVersion: data.resume_version,
-        appliedAt: new Date(data.applied_at),
-        respondedAt: data.responded_at ? new Date(data.responded_at) : undefined,
-        interviewDate: data.interview_date ? new Date(data.interview_date) : undefined,
-        rejectedAt: data.rejected_at ? new Date(data.rejected_at) : undefined,
+        appliedAt: parseDate(data.applied_at),
+        respondedAt: data.responded_at ? parseDate(data.responded_at) : undefined,
+        interviewDate: data.interview_date ? parseDate(data.interview_date) : undefined,
+        rejectedAt: data.rejected_at ? parseDate(data.rejected_at) : undefined,
         techStack: data.tech_stack || [],
         niceToHaveStack: data.nice_to_have_stack || [],
         responsibilities: data.responsibilities || [],
@@ -155,7 +161,7 @@ export async function createApplication(app: Partial<JobApplication>): Promise<J
         profileId: data.profile_id,
         resumeId: data.resume_id,
         resumeVersion: data.resume_version,
-        appliedAt: new Date(data.applied_at),
+        appliedAt: parseDate(data.applied_at),
         techStack: data.tech_stack || [],
         niceToHaveStack: data.nice_to_have_stack || [],
         responsibilities: data.responsibilities || [],
@@ -167,7 +173,7 @@ export async function createApplication(app: Partial<JobApplication>): Promise<J
 
 export async function updateApplicationStatus(id: string, status: ApplicationStatus): Promise<void> {
     const payload: any = { status }
-    if (status === "responded") payload.responded_at = new Date().toISOString()
+    if ((status as string) === "responded") payload.responded_at = new Date().toISOString()
     if (status === "rejected") payload.rejected_at = new Date().toISOString()
 
     const res = await fetch(`${API_Base}/applications/${id}`, {
@@ -210,10 +216,10 @@ export async function updateApplication(id: string, updates: Partial<JobApplicat
         profileId: data.profile_id,
         resumeId: data.resume_id,
         resumeVersion: data.resume_version,
-        appliedAt: new Date(data.applied_at),
-        respondedAt: data.responded_at ? new Date(data.responded_at) : undefined,
-        interviewDate: data.interview_date ? new Date(data.interview_date) : undefined,
-        rejectedAt: data.rejected_at ? new Date(data.rejected_at) : undefined,
+        appliedAt: parseDate(data.applied_at),
+        respondedAt: data.responded_at ? parseDate(data.responded_at) : undefined,
+        interviewDate: data.interview_date ? parseDate(data.interview_date) : undefined,
+        rejectedAt: data.rejected_at ? parseDate(data.rejected_at) : undefined,
         techStack: data.tech_stack || [],
         niceToHaveStack: data.nice_to_have_stack || [],
         responsibilities: data.responsibilities || [],
