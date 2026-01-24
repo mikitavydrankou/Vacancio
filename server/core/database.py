@@ -12,9 +12,19 @@ DATABASE_NAME = os.getenv('DATABASE_NAME')
 DB_HOST = os.getenv('DB_HOST', 'localhost')
 DB_PORT = os.getenv('DB_PORT', '5432')
 
-DATABASE_URL = f"postgresql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DB_HOST}:{DB_PORT}/{DATABASE_NAME}"
+if DB_HOST == 'localhost' or DB_HOST == '127.0.0.1' or not DB_HOST:
+    DATABASE_URL = "sqlite:///./vacancio.db"
+else:
+    DATABASE_URL = f"postgresql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DB_HOST}:{DB_PORT}/{DATABASE_NAME}"
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True, echo=True)
+if "sqlite" in DATABASE_URL:
+    engine = create_engine(
+        DATABASE_URL, 
+        connect_args={"check_same_thread": False}, 
+        echo=True
+    )
+else:
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -30,7 +40,10 @@ def get_db():
 def check_connection():
     try:
         with engine.connect() as conn:
-            result = conn.execute(text("SELECT version()"))
+            if engine.name == 'sqlite':
+                result = conn.execute(text("SELECT sqlite_version()"))
+            else:
+                result = conn.execute(text("SELECT version()"))
             version = result.fetchone()[0]
             print(f"Success connection to db: {version}")
             return True

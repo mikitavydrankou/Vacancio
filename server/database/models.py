@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Enum, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.types import JSON
 import uuid
 import enum
 
@@ -72,10 +72,10 @@ class JobApplication(Base):
     salary = Column(String)
     source = Column(String)
     
-    tech_stack = Column(JSONB, default=[])
-    nice_to_have_stack = Column(JSONB, default=[])
-    responsibilities = Column(JSONB, default=[])
-    requirements = Column(JSONB, default=[])
+    tech_stack = Column(JSON, default=[])
+    nice_to_have_stack = Column(JSON, default=[])
+    responsibilities = Column(JSON, default=[])
+    requirements = Column(JSON, default=[])
     work_mode = Column(String)
     employment_type = Column(String)
     seniority = Column(Enum(Seniority), nullable=True)
