@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Response, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import logging
 import traceback
+
+import json
 
 from core.database import get_db
 from database import crud, schemas, models
@@ -131,12 +133,56 @@ def reparse_application(app_id: str, background_tasks: BackgroundTasks, db: Sess
     if not db_app.raw_data:
         raise HTTPException(status_code=400, detail="No raw data available for re-parsing")
     
-    # Reset status to parsing
     updates = schemas.JobApplicationUpdate(status=models.ApplicationStatus.parsing)
     db_app = crud.update_application(db, app_id, updates)
     
-    # Trigger background parsing
     background_tasks.add_task(process_application_background, app_id)
     
     return db_app
+
+@router.get("/export/json", response_class=Response)
+def export_applications_json(db: Session = Depends(get_db)):
+    applications = crud.get_applications(db, skip=0, limit=10000)
+    def to_llm_format(app):
+        return {
+            "company": app.company,
+            "position": app.position,
+            "location": app.location,
+            "salary": app.salary,
+            "tech_stack": app.tech_stack,
+            "nice_to_have_stack": app.nice_to_have_stack,
+            "responsibilities": app.responsibilities,
+            "requirements": app.requirements,
+            "work_mode": app.work_mode,
+            "employment_type": app.employment_type,
+            "seniority": str(app.seniority) if app.seniority else None,
+            "description": app.description,
+            "source": app.source,
+            "url": app.url,
+        }
+    data = json.dumps([to_llm_format(app) for app in applications], ensure_ascii=False, indent=2)
+    headers = {
+        "Content-Disposition": "attachment; filename=vacancies.json"
+    }
+    return Response(content=data, media_type="application/json", headers=headers)
+
+
+@router.post("/import/json")
+async def import_applications_json(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    content = await file.read()
+    try:
+        applications = json.loads(content)
+        count = 0
+        for app in applications:
+            app.pop("id", None)
+            app.pop("applied_at", None)
+            app.pop("responded_at", None)
+            app.pop("interview_date", None)
+            app.pop("rejected_at", None)
+            app_create = schemas.JobApplicationCreate(**app)
+            crud.create_application(db, app_create)
+            count += 1
+        return {"status": "imported", "count": count}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Import error: {e}")
 
