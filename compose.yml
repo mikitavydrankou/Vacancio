@@ -6,6 +6,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    volumes:
+      - ./server/vacancio.db:/app/vacancio.db 
+      - ./server/uploads:/app/uploads
 
     env_file:
       - .env
