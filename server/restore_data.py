@@ -131,9 +131,30 @@ def restore_data(json_path: str = "vacancies_backup.json", profile_name: str = "
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Restore vacancies from JSON.")
     parser.add_argument("json_file", nargs="?", default="vacancies_backup.json", help="Path to JSON file")
-    parser.add_argument("--name", default="Restored User", help="Profile name to use or create")
+    parser.add_argument("--name", default=None, help="Profile name to use or create. If not specified, tries to use the most recently created profile.")
     parser.add_argument("--resume", default="placeholder.pdf", help="Fake path/name for the created resume")
     
     args = parser.parse_args()
     
-    restore_data(args.json_file, args.name, args.resume)
+    # Logic to find latest profile if name is not provided
+    target_profile_name = args.name
+    
+    if target_profile_name is None:
+        # Connect to DB to find latest
+        db = SessionLocal()
+        try:
+            # Get latest profile by creation date
+            latest_profile = db.query(models.Profile).order_by(models.Profile.created_at.desc()).first()
+            if latest_profile:
+                print(f"No profile name specified. Found latest profile: '{latest_profile.name}'")
+                target_profile_name = latest_profile.name
+            else:
+                print("No existing profiles found. Will create default 'Restored User'.")
+                target_profile_name = "Restored User"
+        except Exception as e:
+            print(f"Error finding latest profile: {e}")
+            target_profile_name = "Restored User"
+        finally:
+            db.close()
+    
+    restore_data(args.json_file, target_profile_name, args.resume)
