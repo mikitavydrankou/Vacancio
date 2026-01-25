@@ -11,7 +11,11 @@ from core.database import SessionLocal, engine, Base
 from database import models, schemas
 from database import crud
 
-def restore_data(json_path: str = "vacancies_backup.json"):
+import argparse
+
+# ... imports ...
+
+def restore_data(json_path: str = "vacancies_backup.json", profile_name: str = "Restored User", resume_path: str = "placeholder.pdf"):
     print(f"Reading data from {json_path}...")
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
@@ -30,7 +34,7 @@ def restore_data(json_path: str = "vacancies_backup.json"):
 
     try:
         # 1. Get or Create Profile
-        profile_name = "Restored User"
+        print(f"Checking for profile: '{profile_name}'")
         profile = crud.get_profile_by_name(db, profile_name)
         if not profile:
             print(f"Creating profile '{profile_name}'...")
@@ -42,19 +46,20 @@ def restore_data(json_path: str = "vacancies_backup.json"):
         # 2. Get or Create Resume
         resume_version = crud.get_latest_resume_version(db, profile.id)
         if resume_version == 0:
-            print("Creating default resume...")
+            print(f"Creating default resume (v1) from {resume_path}...")
+            # Ideally we would upload/copy the file here if it were a real upload
             resume_create = schemas.ResumeCreate(name="Restored Resume", profile_id=profile.id)
-            resume = crud.create_resume(db, resume_create, file_path="placeholder.pdf", version=1)
+            resume = crud.create_resume(db, resume_create, file_path=resume_path, version=1)
             resume_version = 1
         else:
             print(f"Using latest resume version: {resume_version}")
-            # Get the resume object
-            # We assume the resume exists if version > 0
             resume = db.query(models.Resume).filter(
                 models.Resume.profile_id == profile.id,
                 models.Resume.version == resume_version
             ).first()
-
+            
+        # ... rest of the import logic remains mostly the same ...
+        
         # 3. Import Applications
         print(f"Found {len(data)} applications to import.")
         count = 0
@@ -64,18 +69,19 @@ def restore_data(json_path: str = "vacancies_backup.json"):
             # Map Seniority
             seniority_val = item.get("seniority")
             if seniority_val:
-                if seniority_val.startswith("Seniority."):
+                if isinstance(seniority_val, str) and seniority_val.startswith("Seniority."):
                     seniority_val = seniority_val.split(".")[1]
-                # Validate if it's a valid enum member
-                if seniority_val not in models.Seniority.__members__:
-                     # fallback or keep as None if invalid
-                     print(f"Warning: Invalid seniority '{seniority_val}' for {item.get('company')}, setting to None")
-                     seniority_val = None
+                
+                # Check directly against values
+                valid_seniorities = [e.value for e in models.Seniority]
+                if seniority_val not in valid_seniorities:
+                     # Try to match by name
+                     if seniority_val in models.Seniority.__members__:
+                        seniority_val = models.Seniority[seniority_val].value
+                     else:
+                        # print(f"Warning: Invalid seniority '{seniority_val}' for {item.get('company')}, setting to None")
+                        seniority_val = None
             
-            # Handle timestamps if they aren't in the JSON (assuming they are new imports)
-            
-            # Create Schema Object
-            # We need to map JSON keys to JobApplicationCreate keys
             app_create = schemas.JobApplicationCreate(
                 profile_id=profile.id,
                 resume_id=resume.id,
@@ -94,33 +100,40 @@ def restore_data(json_path: str = "vacancies_backup.json"):
                 employment_type=item.get("employment_type"),
                 seniority=seniority_val,
                 description=item.get("description"),
-                raw_data=json.dumps(item), # Store original as raw_data just in case
-                status=models.ApplicationStatus.no_response # Default status
+                raw_data=json.dumps(item), 
+                status=models.ApplicationStatus.no_response
             )
             
-            # Use CRUD to create
             try:
-                # Check duplicates based on URL if available
+                # Check duplicates based on URL
                 existing = None
                 if app_create.url:
-                    existing = db.query(models.JobApplication).filter(models.JobApplication.url == app_create.url).first()
+                    existing = db.query(models.JobApplication).filter(
+                        models.JobApplication.url == app_create.url,
+                        models.JobApplication.profile_id == profile.id  # Check within profile
+                    ).first()
                 
                 if not existing:
                     crud.create_application(db, app_create)
                     count += 1
                 else:
-                    print(f"Skipping duplicate: {app_create.company} - {app_create.position}")
+                    # Optional: Update existing? For now, skip
+                    pass
 
             except Exception as e:
                 print(f"Failed to import {item.get('company')}: {e}")
 
-        print(f"Successfully restored {count} applications.")
+        print(f"Successfully restored {count} applications for profile '{profile.name}'.")
 
     finally:
         db.close()
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        restore_data(sys.argv[1])
-    else:
-        restore_data()
+    parser = argparse.ArgumentParser(description="Restore vacancies from JSON.")
+    parser.add_argument("json_file", nargs="?", default="vacancies_backup.json", help="Path to JSON file")
+    parser.add_argument("--name", default="Restored User", help="Profile name to use or create")
+    parser.add_argument("--resume", default="placeholder.pdf", help="Fake path/name for the created resume")
+    
+    args = parser.parse_args()
+    
+    restore_data(args.json_file, args.name, args.resume)

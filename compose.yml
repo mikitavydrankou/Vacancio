@@ -7,9 +7,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./server/vacancio.db:/app/vacancio.db 
-      - ./server/uploads:/app/uploads
-
+      - ./server:/app
     env_file:
       - .env
     networks:
