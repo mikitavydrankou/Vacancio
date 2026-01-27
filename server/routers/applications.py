@@ -167,22 +167,20 @@ def export_applications_json(db: Session = Depends(get_db)):
     return Response(content=data, media_type="application/json", headers=headers)
 
 
+from services.data_import import import_applications
+
 @router.post("/import/json")
 async def import_applications_json(file: UploadFile = File(...), db: Session = Depends(get_db)):
     content = await file.read()
     try:
         applications = json.loads(content)
-        count = 0
-        for app in applications:
-            app.pop("id", None)
-            app.pop("applied_at", None)
-            app.pop("responded_at", None)
-            app.pop("interview_date", None)
-            app.pop("rejected_at", None)
-            app_create = schemas.JobApplicationCreate(**app)
-            crud.create_application(db, app_create)
-            count += 1
-        return {"status": "imported", "count": count}
+        if not isinstance(applications, list):
+             raise HTTPException(status_code=400, detail="JSON must be a list of vacancies")
+        
+        result = import_applications(db, applications)
+        return {"status": "imported", "count": result["success_count"], "details": result}
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON file")
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Import error: {e}")
 

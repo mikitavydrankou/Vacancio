@@ -6,7 +6,7 @@ import logging
 from core.database import check_connection, engine
 from core.config import UPLOAD_DIR
 from database import models
-from routers import profiles, resumes, applications
+from routers import profiles, resumes, applications, system
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -30,6 +30,7 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 app.include_router(profiles.router, prefix="/profiles", tags=["Profiles"])
 app.include_router(resumes.router, prefix="/resumes", tags=["Resumes"])
 app.include_router(applications.router, prefix="/applications", tags=["Applications"])
+app.include_router(system.router, prefix="/system", tags=["System"])
 
 @app.on_event("startup")
 async def startup():

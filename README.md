@@ -19,3 +19,5 @@ docker-compose up --build
 ubuntu: https://linuxcapable.com/how-to-create-a-python-virtual-environment-on-ubuntu-linux/
 
 source env/bin/activate
+
+docker compose run --rm server python restore_data.py
