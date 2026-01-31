@@ -10,12 +10,20 @@ from routers import profiles, resumes, applications
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-models.Base.metadata.create_all(bind=engine)
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    check_connection()
+    models.Base.metadata.create_all(bind=engine)
+    logger.info("🚀 Server started successfully")
+    yield
 
 app = FastAPI(
     title="Vacancio API",
     description="Scrapes job postings from any website and parses them with AI",
-    version="2.0.0"
+    version="2.0.0",
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -30,11 +38,6 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 app.include_router(profiles.router, prefix="/profiles", tags=["Profiles"])
 app.include_router(resumes.router, prefix="/resumes", tags=["Resumes"])
 app.include_router(applications.router, prefix="/applications", tags=["Applications"])
-
-@app.on_event("startup")
-async def startup():
-    check_connection()
-    logger.info("🚀 Server started successfully")
 
 @app.get("/", tags=["Health"])
 def root():

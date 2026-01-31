@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 
@@ -14,9 +14,7 @@ class Profile(ProfileBase):
     id: str
     created_at: datetime
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeBase(BaseModel):
@@ -33,9 +31,7 @@ class Resume(ResumeBase):
     uploaded_at: datetime
     # We might not send file_data back, just metadata/url to download
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = ConfigDict(from_attributes=True)
 
 
 class JobApplicationBase(BaseModel):
@@ -102,9 +98,7 @@ class JobApplication(JobApplicationBase):
     interview_date: Optional[datetime]
     rejected_at: Optional[datetime]
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = ConfigDict(from_attributes=True)
 
     @field_validator("status", mode="before")
     @classmethod
@@ -112,4 +106,5 @@ class JobApplication(JobApplicationBase):
         if v is None:
             return ApplicationStatus.failed
         return v
+
 

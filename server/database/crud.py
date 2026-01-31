@@ -75,7 +75,7 @@ def get_application(db: Session, application_id: str):
 
 
 def create_application(db: Session, application: schemas.JobApplicationCreate):
-    db_app = models.JobApplication(**application.dict())
+    db_app = models.JobApplication(**application.model_dump())
     db.add(db_app)
     db.commit()
     db.refresh(db_app)
@@ -87,7 +87,7 @@ def update_application(db: Session, application_id: str, updates: schemas.JobApp
     if not db_app:
         return None
     
-    update_data = updates.dict(exclude_unset=True)
+    update_data = updates.model_dump(exclude_unset=True)
     # Ensure critical fields aren't accidentally set to None if present in update_data
     if "status" in update_data and update_data["status"] is None:
         del update_data["status"]

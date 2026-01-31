@@ -7,7 +7,6 @@ from sqlalchemy.pool import StaticPool
 from main import app
 from core.database import Base, get_db
 
-# Use an in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
@@ -31,7 +30,6 @@ def db_session():
         yield session
     finally:
         session.close()
-        # Drop all tables after the test ensuring a clean slate
         Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture(scope="function")
@@ -43,7 +41,6 @@ def client(db_session):
         try:
             yield db_session
         finally:
-            # Do not close the session here, as it is managed by the db_session fixture
             pass
             
     app.dependency_overrides[get_db] = override_get_db
@@ -51,5 +48,4 @@ def client(db_session):
     with TestClient(app) as test_client:
         yield test_client
     
-    # Restore the dependency override after the test
     app.dependency_overrides.clear()

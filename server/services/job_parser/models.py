@@ -1,5 +1,5 @@
 """Pydantic models for job posting data"""
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional, List
 from enum import Enum
 
@@ -52,18 +52,20 @@ class Salary(BaseModel):
     unit: Optional[SalaryUnit] = None
     gross_net: Optional[GrossNet] = GrossNet.UNKNOWN
     
-    @validator('min', 'max')
+    @field_validator('min', 'max')
+    @classmethod
     def validate_positive(cls, v):
         if v is not None and v < 0:
             raise ValueError("Salary must be positive")
         return v
     
-    @validator('max')
-    def validate_max_greater_than_min(cls, v, values):
-        min_val = values.get('min')
-        if v is not None and min_val is not None and v < min_val:
+    @model_validator(mode='after')
+    def validate_max_greater_than_min(self):
+        min_val = self.min
+        max_val = self.max
+        if max_val is not None and min_val is not None and max_val < min_val:
             raise ValueError("Max salary must be >= min salary")
-        return v
+        return self
 
 
 class JobPosting(BaseModel):
@@ -82,7 +84,8 @@ class JobPosting(BaseModel):
     raw_data: Optional[str] = None
     source: Optional[str] = Field(default=None, description="Auto-filled from URL")
     
-    @validator('stack', 'nice_to_have_stack', pre=True, always=True)
+    @field_validator('stack', 'nice_to_have_stack', mode='before')
+    @classmethod
     def remove_empty_strings(cls, v):
         if not v:
             return []
