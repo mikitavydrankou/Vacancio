@@ -1,23 +1,43 @@
 # Vacancio
 
-Track and manage job applications with AI-powered parsing.
+Track and manage your resume conversion rate with automated job parsing and analytics LOCALLY.
 
-## Quick Start
+## Core Features
 
-### Docker (Recommended)
-```bash
-docker-compose up --build
-```
+- AI-Powered Parsing: Extract stack, category, and job details from raw text without manual data entry.
+- Conversion Tracking: Monitor your success rate across different resume versions.
+- Advanced Sorting: Filter and organize applications by resume, tech stack, category, or status.
+- Data Analytics: Visualize application trends and identify missing information in your profile.
 
-### Manual
-1. **Server**: `pip install -r requirements.txt && uvicorn main:app --reload --host 0.0.0.0`
-2. **Frontend**: `npm install && npm run dev`
+## Tech Stack
 
-*Copy `.env.example` to `.env` first.*
+- Frontend: Next.js, Tailwind CSS, Shadcn UI
+- Backend: FastAPI (Python), SQLAlchemy
+- Database: SQLite
+- AI: OpenRouter (GPT-4o-mini)
+- Infrastructure: Docker
 
+## Getting Started
 
-ubuntu: https://linuxcapable.com/how-to-create-a-python-virtual-environment-on-ubuntu-linux/
+### Prerequisites
 
-source env/bin/activate
+- Docker and Docker Compose
+- OpenRouter API Key
 
-docker compose run --rm server python restore_data.py
+### Installation
+
+1. Clone the environment template:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Configure OpenRouter:
+   Edit `.env` and provide your `OPENROUTER_API_KEY`.
+
+3. Launch the application:
+   ```bash
+   docker compose up --build
+   ```
+
+4. Access the web interface:
+   Open `http://localhost:3000` in your browser.
