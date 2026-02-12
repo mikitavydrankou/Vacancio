@@ -1,0 +1,17 @@
+services:
+  vacancio:
+    image: mikitavydrankou/vacancio:latest
+    container_name: vacancio
+    ports:
+      - "3000:3000"
+      - "8000:8000"
+    volumes:
+      - vacancio-uploads:/app/server/uploads
+      - vacancio-db:/app/server
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+    restart: unless-stopped
+
+volumes:
+  vacancio-uploads:
+  vacancio-db:
