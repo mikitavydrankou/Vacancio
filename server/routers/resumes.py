@@ -5,7 +5,7 @@ import os
 import shutil
 
 from core.database import get_db
-from core.config import UPLOAD_DIR
+from core.config import settings
 from database import crud, schemas
 
 router = APIRouter()
@@ -25,7 +25,7 @@ async def create_resume(
     version = crud.get_latest_resume_version(db, profile_id) + 1
     
     safe_filename = file.filename.replace(" ", "_").replace("/", "").replace("\\", "")
-    file_path = os.path.join(UPLOAD_DIR, f"{profile_id}_v{version}_{safe_filename}")
+    file_path = os.path.join(settings.UPLOAD_DIR, f"{profile_id}_v{version}_{safe_filename}")
     
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)

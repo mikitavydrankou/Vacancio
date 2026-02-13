@@ -59,19 +59,41 @@ FastAPI backend for Vacancio job tracking system with AI-powered job parsing.
 
 ## Quick Start
 
+### Local Development
 ```bash
 # Install dependencies
 pip install -r requirements.txt
 
 # Set environment variables
-export DATABASE_URL="postgresql://user:pass@localhost/vacancio"
+export DATABASE_URL="sqlite:///data/vacancio.db"  # SQLite (default)
 export OPENROUTER_API_KEY="sk-or-v1-xxxxx"  # For AI parsing
 
 # Run server
-python main.py
-# or with uvicorn
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+### Docker Production Build
+
+**Important**: The `.dockerignore` files are critical to prevent local development data from being baked into the Docker image.
+
+```bash
+# Build the production image
+docker build -t vacancio:latest .
+
+# Test locally
+docker run --rm -p 3000:3000 -p 8000:8000 \
+  -v ./data:/app/server/data \
+  -e OPENROUTER_API_KEY=sk-or-v1-xxx \
+  vacancio:latest
+
+# Push to registry
+docker push yourusername/vacancio:latest
+```
+
+**Critical**: Ensure `server/data/`, `server/uploads/`, and `*.db` files are in `.dockerignore` to prevent:
+- Stale database schemas being baked into the image
+- Corrupted data preventing normal operation
+- Large image sizes from development artifacts
 
 ## API Documentation
 - **Swagger UI**: http://localhost:8000/docs
@@ -81,15 +103,17 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ## Environment Variables
 
 ```bash
-# Required
-DATABASE_URL=postgresql://user:pass@localhost:5432/vacancio
+# Database (defaults to SQLite in data/ directory)
+DATABASE_URL=sqlite:///data/vacancio.db  # Default
+# DATABASE_URL=postgresql://user:pass@localhost:5432/vacancio  # PostgreSQL
 
-# Optional (for AI features)
+# Required for AI parsing features
 OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxxx
 
 # Optional
-PORT=8000
-DEBUG=true
+DATA_DIR=data  # Persistent storage location
+UPLOAD_DIR=data/uploads  # Resume storage
+SECRET_KEY=changeme  # Change in production
 ```
 
 ## API Endpoints

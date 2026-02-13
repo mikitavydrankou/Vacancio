@@ -3,40 +3,57 @@
 **Purpose**: Central navigation hub for AI agents working on the Vacancio codebase.
 
 **Project**: Job application tracking with AI-powered parsing  
-**Stack**: FastAPI + Next.js + PostgreSQL/SQLite + OpenRouter LLM
+**Stack**: FastAPI + Next.js + SQLite/PostgreSQL + OpenRouter LLM  
+**Architecture**: Modern "pull & run" Docker deployment with persistent data separation
 
 ---
 
 ## 📚 Documentation Map
 
 ### Core Architecture
-- [docs/BACKEND_ARCHITECTURE.md](docs/BACKEND_ARCHITECTURE.md) - Backend layers, patterns, dependencies
-- [docs/FRONTEND_ARCHITECTURE.md](docs/FRONTEND_ARCHITECTURE.md) - Frontend structure, components, routing
-- [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) - Schema, models, relationships, enums
-- [docs/API_CONTRACTS.md](docs/API_CONTRACTS.md) - REST endpoints, request/response schemas
-
-### Backend Modules
-- [server/SERVER_OVERVIEW.md](server/SERVER_OVERVIEW.md) - Backend overview, quick start, API list
-- [server/core/CORE_SYSTEMS.md](server/core/CORE_SYSTEMS.md) - Config, database, environment
-- [server/database/DATABASE_LAYER.md](server/database/DATABASE_LAYER.md) - ORM models, Pydantic schemas, CRUD
+- [README.md](README.md) - Project overview, quick start, updates
+- [server/SERVER_OVERVIEW.md](server/SERVER_OVERVIEW.md) - Backend overview, Docker builds, API list
+- [server/core/CORE_SYSTEMS.md](server/core/CORE_SYSTEMS.md) - Config (Pydantic Settings), database, migrations
+- [server/database/DATABASE_LAYER.md](server/database/DATABASE_LAYER.md) - SQLAlchemy 2.0 models, schemas, CRUD
 - [server/routers/API_ROUTERS.md](server/routers/API_ROUTERS.md) - Route handlers, endpoints
 - [server/services/BUSINESS_LOGIC.md](server/services/BUSINESS_LOGIC.md) - **AI agent, data import, business logic**
 - [server/services/job_parser/JOB_PARSER.md](server/services/job_parser/JOB_PARSER.md) - Job parsing details
 - [server/tests/TESTING_GUIDE.md](server/tests/TESTING_GUIDE.md) - Test structure, commands
 
-### Development
-- [docs/DEV_WORKFLOW.md](docs/DEV_WORKFLOW.md) - Setup, Docker, environment variables
-
 ---
 
-## 📂 File Structure
+## 🚀 Key Architecture Decisions
 
-### Backend
-```
-server/
-├── main.py                    # FastAPI entry point
+### Data Persistence Model
+All persistent data lives in `/app/server/data/`:
+- `data/vacancio.db` - SQLite database
+- `data/uploads/` - Resume files
+
+This separation ensures:
+- ✅ Code updates don't destroy user data, lifespan events
 ├── core/
-│   ├── config.py             # Environment config
+│   ├── config.py             # Pydantic Settings (v2)
+│   ├── database.py           # SQLAlchemy 2.0 engine
+│   └── migration.py          # Auto-migration logic
+├── database/
+│   ├── models.py             # SQLAlchemy 2.0 models (Mapped[] syntax)
+│   ├── schemas.py            # Pydantic v2 schemas
+│   └── crud.py               # CRUD operations
+├── routers/
+│   ├── applications.py       # Application endpoints
+│   ├── profiles.py           # Profile endpoints
+│   └── resumes.py            # Resume endpoints
+├── services/
+│   ├── data_import.py        # Bulk import
+│   └── job_parser/
+│       ├── models.py         # JobPosting models
+│       ├── validator.py      # Tech normalization (70+)
+│       └── ai/
+│           ├── parser.py     # OpenRouter integration
+│           └── prompts.py    # LLM prompts
+├── data/                      # ⚠️ Persistent storage (gitignored)
+│   ├── vacancio.db           # SQLite database
+│   └── uploads/              # Resume filet config
 │   └── database.py           # SQLAlchemy setup
 ├── database/
 │   ├── models.py             # ORM models

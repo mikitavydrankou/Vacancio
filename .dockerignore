@@ -22,6 +22,12 @@ server/**/*.pyd
 .env.*
 !.env.example
 
+# Local data files (should NOT be in Docker image)
+server/data/
+server/uploads/
+server/vacancio.db
+server/*.db
+
 # IDE
 .vscode
 .idea

@@ -24,7 +24,19 @@ Track and manage your resume conversion rate with automated job parsing and anal
 - Docker and Docker Compose
 - OpenRouter API Key
 
-### Installation
+Ubuntu:
+
+1. export env vars:
+```bash
+   export OPENROUTER_API_KEY=sk-or-v1-xxxxx
+```
+2. Run the application:
+```bash
+   docker compose -f docker-compose.yml up -d
+```
+
+
+### Dev installation
 
 1. Clone the environment template:
    ```bash
@@ -36,7 +48,7 @@ Track and manage your resume conversion rate with automated job parsing and anal
 
 3. Launch the application:
    ```bash
-   docker compose up -d
+   docker compose -f compose.dev.yml up -d
    ```
 
 4. Access the web interface:
@@ -53,7 +65,9 @@ To update to the latest version without losing data:
 
 2. Restart the application:
    ```bash
-   docker compose up -d
+   docker compose -f docker-compose.yml up -d
    ```
 
 Your database and uploads are safely stored in the `./data` folder and persist across updates.
+
+
