@@ -6,12 +6,10 @@ services:
       - "3000:3000"
       - "8000:8000"
     volumes:
-      - vacancio-uploads:/app/server/uploads
-      - vacancio-db:/app/server
+      - vacancio-data:/app/server/data
     environment:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
     restart: unless-stopped
 
 volumes:
-  vacancio-uploads:
-  vacancio-db:
+  vacancio-data:

@@ -36,8 +36,24 @@ Track and manage your resume conversion rate with automated job parsing and anal
 
 3. Launch the application:
    ```bash
-   docker compose up --build
+   docker compose up -d
    ```
 
 4. Access the web interface:
    Open `http://localhost:3000` in your browser.
+
+## Updates
+
+To update to the latest version without losing data:
+
+1. Pull the latest image:
+   ```bash
+   docker compose pull
+   ```
+
+2. Restart the application:
+   ```bash
+   docker compose up -d
+   ```
+
+Your database and uploads are safely stored in the `./data` folder and persist across updates.

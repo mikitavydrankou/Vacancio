@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Enum, Boolean
-from sqlalchemy.orm import relationship
+from sqlalchemy import ForeignKey, Text, Enum, Boolean, String, Integer, DateTime
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 from sqlalchemy.types import JSON
+from typing import List, Optional, Any
 import uuid
 import enum
 
@@ -34,61 +35,62 @@ class Seniority(str, enum.Enum):
 class Profile(Base):
     __tablename__ = "profiles"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    name = Column(String, unique=True, index=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    id: Mapped[str] = mapped_column(primary_key=True, default=generate_uuid)
+    name: Mapped[str] = mapped_column(unique=True, index=True)
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    resumes = relationship("Resume", back_populates="profile", cascade="all, delete-orphan")
-    applications = relationship("JobApplication", back_populates="profile", cascade="all, delete-orphan")
+    resumes: Mapped[List["Resume"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
+    applications: Mapped[List["JobApplication"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
 
 
 class Resume(Base):
     __tablename__ = "resumes"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    profile_id = Column(String, ForeignKey("profiles.id"), nullable=False)
-    name = Column(String, nullable=False)
-    version = Column(Integer, nullable=False)
-    file_path = Column(String, nullable=False)
-    uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
+    id: Mapped[str] = mapped_column(primary_key=True, default=generate_uuid)
+    profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id"))
+    name: Mapped[str] = mapped_column()
+    version: Mapped[int] = mapped_column()
+    file_path: Mapped[str] = mapped_column()
+    uploaded_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    profile = relationship("Profile", back_populates="resumes")
-    applications = relationship("JobApplication", back_populates="resume")
+    profile: Mapped["Profile"] = relationship(back_populates="resumes")
+    applications: Mapped[List["JobApplication"]] = relationship(back_populates="resume")
 
 
 class JobApplication(Base):
     __tablename__ = "applications"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    profile_id = Column(String, ForeignKey("profiles.id"), nullable=False)
-    resume_id = Column(String, ForeignKey("resumes.id"), nullable=False)
-    resume_version = Column(Integer, nullable=False)
+    id: Mapped[str] = mapped_column(primary_key=True, default=generate_uuid)
+    profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id"))
+    resume_id: Mapped[str] = mapped_column(ForeignKey("resumes.id"))
+    resume_version: Mapped[int] = mapped_column()
     
-    url = Column(String, nullable=True)
+    url: Mapped[Optional[str]] = mapped_column(nullable=True)
 
-    company = Column(String, nullable=False)
-    position = Column(String, nullable=False)
-    location = Column(String)
-    salary = Column(String)
-    source = Column(String)
+    company: Mapped[str] = mapped_column()
+    position: Mapped[str] = mapped_column()
+    location: Mapped[Optional[str]] = mapped_column(nullable=True)
+    salary: Mapped[Optional[str]] = mapped_column(nullable=True)
+    source: Mapped[Optional[str]] = mapped_column(nullable=True)
     
-    tech_stack = Column(JSON, default=[])
-    nice_to_have_stack = Column(JSON, default=[])
-    responsibilities = Column(JSON, default=[])
-    requirements = Column(JSON, default=[])
-    work_mode = Column(String)
-    employment_type = Column(String)
-    seniority = Column(Enum(Seniority), nullable=True)
-    description = Column(Text)
-    raw_data = Column(Text)
+    tech_stack: Mapped[List[Any]] = mapped_column(JSON, default=[])
+    nice_to_have_stack: Mapped[List[Any]] = mapped_column(JSON, default=[])
+    responsibilities: Mapped[List[Any]] = mapped_column(JSON, default=[])
+    requirements: Mapped[List[Any]] = mapped_column(JSON, default=[])
+    work_mode: Mapped[Optional[str]] = mapped_column(nullable=True)
+    employment_type: Mapped[Optional[str]] = mapped_column(nullable=True)
+    seniority: Mapped[Optional[Seniority]] = mapped_column(Enum(Seniority), nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    raw_data: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
-    status = Column(Enum(ApplicationStatus), default=ApplicationStatus.no_response)
-    is_favorite = Column(Boolean, default=False)
-    is_archived = Column(Boolean, default=False)
-    applied_at = Column(DateTime(timezone=True), server_default=func.now())
-    responded_at = Column(DateTime(timezone=True))
-    interview_date = Column(DateTime(timezone=True))
-    rejected_at = Column(DateTime(timezone=True))
+    status: Mapped[ApplicationStatus] = mapped_column(Enum(ApplicationStatus), default=ApplicationStatus.no_response)
+    is_favorite: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_archived: Mapped[bool] = mapped_column(Boolean, default=False)
+    applied_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    responded_at: Mapped[Optional[DateTime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    interview_date: Mapped[Optional[DateTime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    rejected_at: Mapped[Optional[DateTime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
-    profile = relationship("Profile", back_populates="applications")
-    resume = relationship("Resume", back_populates="applications")
+    profile: Mapped["Profile"] = relationship(back_populates="applications")
+    resume: Mapped["Resume"] = relationship(back_populates="applications")
+

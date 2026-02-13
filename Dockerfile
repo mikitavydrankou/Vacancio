@@ -30,6 +30,7 @@ RUN pip3 install --no-cache-dir --break-system-packages -r /app/server/requireme
 
 COPY server/ /app/server/
 RUN mkdir -p /app/server/uploads
+RUN mkdir -p /app/server/data && chmod 777 /app/server/data
 
 COPY --from=frontend-builder /app/public ./frontend/public
 COPY --from=frontend-builder /app/.next/standalone ./frontend/
@@ -41,6 +42,9 @@ RUN addgroup -g 1001 -S nodejs && \
 
 COPY supervisord.conf /etc/supervisord.conf
 
+# Declare the data volume to signal that this directory holds persistent data
+VOLUME ["/app/server/data"]
+
 # Default environment variables
 # OPENROUTER_API_KEY is REQUIRED - pass via: docker run -e OPENROUTER_API_KEY=sk-or-xxx
 ENV NODE_ENV=production \
@@ -49,7 +53,7 @@ ENV NODE_ENV=production \
     PYTHONUNBUFFERED=1 \
     PORT=3000 \
     HOSTNAME="0.0.0.0" \
-    DATABASE_URL="sqlite:///./vacancio.db" \
+    DATABASE_URL="sqlite:///./data/vacancio.db" \
     SECRET_KEY="change-this-in-production" \
     ENVIRONMENT=production \
     NEXT_PUBLIC_API_URL="http://localhost:8000"

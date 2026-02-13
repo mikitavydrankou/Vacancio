@@ -3,22 +3,30 @@
 FastAPI backend for Vacancio job tracking system with AI-powered job parsing.
 
 ## Tech Stack
-- **FastAPI** - Modern async web framework
-- **SQLAlchemy** - ORM with PostgreSQL/SQLite support
-- **Pydantic** - Data validation and serialization
+- **FastAPI** - Modern async web framework (v0.115+)
+- **SQLAlchemy 2.0** - Modern ORM with type-safe `Mapped` syntax
+- **Pydantic V2** - High-performance data validation
+- **Pydantic Settings** - 12-factor configuration management
 - **OpenRouter** - LLM API gateway (GPT-4o-mini, Claude)
 - **pytest** - Testing framework
+- **Docker** - Multi-stage builds, rootless execution
 
 ## Structure
-- **main.py** - Application entry point, CORS, FastAPI configuration
-- **requirements.txt** - Python dependencies
-- [core/](core/CORE_SYSTEMS.md) - Configuration, database setup, environment management
-- [database/](database/DATABASE_LAYER.md) - SQLAlchemy models, Pydantic schemas, CRUD operations
-- [routers/](routers/API_ROUTERS.md) - REST API endpoints (applications, profiles, resumes)
-- [services/](services/BUSINESS_LOGIC.md) - **AI parsing agent**, bulk data import, business logic
-- [tests/](tests/TESTING_GUIDE.md) - Unit and integration tests
+- **main.py** - Application entry point, auto-migration logic
+- **requirements.txt** - Python dependencies (locked)
+- [core/](core/CORE_SYSTEMS.md) - **Config via Pydantic**, database connection, migrations
+- [database/](database/DATABASE_LAYER.md) - SQLAlchemy 2.0 models, Pydantic schemas
+- [routers/](routers/API_ROUTERS.md) - REST API endpoints
+- [services/](services/BUSINESS_LOGIC.md) - AI parsing logic
+- [data/](data/) - **Persistent storage** (SQLite DB + Uploads) - Gitignored
 
 ## Key Features
+
+### 🚀 Zero-Config Deployment
+- **"Pull & Run" Architecture** - Works immediately with `docker compose up`
+- **Self-Contained Data** - All data stored in `./data` folder
+- **Automatic Migrations** - Detects and moves legacy data to new structure
+- **SQLite Default** - Production-ready SQLite configuration with WAL mode
 
 ### 🤖 AI-Powered Job Parsing
 - **Automatic extraction** from unstructured job postings (text/HTML)
