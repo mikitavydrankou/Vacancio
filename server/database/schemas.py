@@ -4,11 +4,24 @@ from datetime import datetime
 
 from database.models import ApplicationStatus, Seniority
 
+class OpenRouterKeyUpdate(BaseModel):
+    api_key: str = ""
+
+
+class OpenRouterStatus(BaseModel):
+    configured: bool
+    source: str  # "db" | "env" | "none"
+    masked: Optional[str] = None
+
+
 class ProfileBase(BaseModel):
     name: str
 
 class ProfileCreate(ProfileBase):
     pass
+
+class ProfileUpdate(BaseModel):
+    name: str
 
 class Profile(ProfileBase):
     id: str
@@ -22,6 +35,9 @@ class ResumeBase(BaseModel):
 
 class ResumeCreate(ResumeBase):
     profile_id: str
+
+class ResumeUpdate(BaseModel):
+    name: str
 
 class Resume(ResumeBase):
     id: str

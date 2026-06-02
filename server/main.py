@@ -7,7 +7,7 @@ from core.database import check_connection, engine
 from core.config import settings
 from core.migration import migrate_data
 from database import models
-from routers import profiles, resumes, applications
+from routers import profiles, resumes, applications, settings as settings_router
 import os
 
 logging.basicConfig(level=logging.INFO)
@@ -38,7 +38,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -47,6 +47,7 @@ app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads"
 app.include_router(profiles.router, prefix="/profiles", tags=["Profiles"])
 app.include_router(resumes.router, prefix="/resumes", tags=["Resumes"])
 app.include_router(applications.router, prefix="/applications", tags=["Applications"])
+app.include_router(settings_router.router, prefix="/settings", tags=["Settings"])
 
 @app.get("/", tags=["Health"])
 def root():

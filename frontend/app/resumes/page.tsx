@@ -5,11 +5,15 @@ import { useRouter } from "next/navigation"
 import {
     fetchProfiles,
     createProfile,
+    updateProfile,
     deleteProfile,
     fetchResumes,
     uploadResume,
+    updateResume,
+    deleteResume,
     fetchApplications
 } from "@/lib/api"
+import { API_BASE } from "@/lib/api/base"
 import type { Resume, JobApplication, ResumeProfile } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,6 +23,9 @@ import {
     LayoutDashboard,
     Plus,
     Trash2,
+    Pencil,
+    Check,
+    X,
     FileText,
     Upload,
     Briefcase,
@@ -38,6 +45,10 @@ export default function ResumesPage() {
 
     const [newProfileName, setNewProfileName] = useState("")
     const [isCreatingProfile, setIsCreatingProfile] = useState(false)
+    const [editingProfileId, setEditingProfileId] = useState<string | null>(null)
+    const [editProfileName, setEditProfileName] = useState("")
+    const [editingResumeId, setEditingResumeId] = useState<string | null>(null)
+    const [editResumeName, setEditResumeName] = useState("")
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
@@ -103,7 +114,7 @@ export default function ResumesPage() {
 
     const handleDeleteProfile = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
-        if (confirm("Are you sure? This will hide associated resumes and applications.")) {
+        if (confirm("Delete this profile? Its resumes and all tracked applications will be permanently removed.")) {
             try {
                 await deleteProfile(id)
                 loadData()
@@ -111,6 +122,60 @@ export default function ResumesPage() {
                 console.error(error)
                 alert("Failed to delete profile")
             }
+        }
+    }
+
+    const handleDeleteResume = async (resume: Resume) => {
+        const count = getResumeStats(resume.version).total
+        const message = count > 0
+            ? `Delete Version ${resume.version}? This also permanently deletes ${count} application${count === 1 ? "" : "s"} tracked under it.`
+            : `Delete Version ${resume.version}?`
+        if (!confirm(message)) return
+        try {
+            await deleteResume(resume.id)
+            loadData(activeProfileId)
+        } catch (error) {
+            console.error(error)
+            alert("Failed to delete resume")
+        }
+    }
+
+    const startEditProfile = (profile: ResumeProfile, e: React.MouseEvent) => {
+        e.stopPropagation()
+        setEditingProfileId(profile.id)
+        setEditProfileName(profile.name)
+    }
+
+    const saveProfileName = async () => {
+        const name = editProfileName.trim()
+        const id = editingProfileId
+        setEditingProfileId(null)
+        if (!id || !name) return
+        try {
+            await updateProfile(id, name)
+            loadData(activeProfileId)
+        } catch (error) {
+            console.error(error)
+            alert("Failed to rename profile (name may already be taken)")
+        }
+    }
+
+    const startEditResume = (resume: Resume) => {
+        setEditingResumeId(resume.id)
+        setEditResumeName(resume.fileName.replace(/\.pdf$/i, ""))
+    }
+
+    const saveResumeName = async () => {
+        const name = editResumeName.trim()
+        const id = editingResumeId
+        setEditingResumeId(null)
+        if (!id || !name) return
+        try {
+            await updateResume(id, name)
+            loadData(activeProfileId)
+        } catch (error) {
+            console.error(error)
+            alert("Failed to rename resume")
         }
     }
 
@@ -159,6 +224,31 @@ export default function ResumesPage() {
                         const profileResumes = resumes.filter(r => r.profileId === profile.id)
                         const profileApps = applications.filter(a => a.profileId === profile.id)
                         
+                        if (editingProfileId === profile.id) {
+                            return (
+                                <div key={profile.id} className="rounded-lg border border-primary/50 bg-background p-2 space-y-2">
+                                    <Input
+                                        value={editProfileName}
+                                        onChange={(e) => setEditProfileName(e.target.value)}
+                                        autoFocus
+                                        className="h-8 text-sm"
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") saveProfileName()
+                                            if (e.key === "Escape") setEditingProfileId(null)
+                                        }}
+                                    />
+                                    <div className="flex gap-2">
+                                        <Button size="sm" className="h-7 flex-1 text-xs gap-1" onClick={saveProfileName}>
+                                            <Check className="h-3 w-3" /> Save
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingProfileId(null)}>
+                                            Cancel
+                                        </Button>
+                                    </div>
+                                </div>
+                            )
+                        }
+
                         return (
                             <button
                                 key={profile.id}
@@ -172,18 +262,30 @@ export default function ResumesPage() {
                             >
                                 <div className="flex items-start justify-between mb-2">
                                     <span className="font-medium truncate flex-1">{profile.name}</span>
-                                    {profiles.length > 1 && (
+                                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+                                        <div
+                                            role="button"
+                                            onClick={(e) => startEditProfile(profile, e)}
+                                            title="Rename profile"
+                                            className={cn(
+                                                "p-1 rounded hover:bg-primary/20",
+                                                activeProfileId === profile.id && "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/20"
+                                            )}
+                                        >
+                                            <Pencil className="h-3.5 w-3.5" />
+                                        </div>
                                         <div
                                             role="button"
                                             onClick={(e) => handleDeleteProfile(profile.id, e)}
+                                            title="Delete profile"
                                             className={cn(
-                                                "opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 hover:text-red-500 transition-all",
+                                                "p-1 rounded hover:bg-red-500/20 hover:text-red-500",
                                                 activeProfileId === profile.id && "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/20"
                                             )}
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                                 <div className={cn(
                                     "flex items-center gap-3 text-xs",
@@ -246,8 +348,10 @@ export default function ResumesPage() {
                         <div className="grid md:grid-cols-2 gap-4">
                             {resumes.map((resume) => {
                                 const stats = getResumeStats(resume.version)
-                                const API_Base = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
-                                const resumeUrl = resume.filePath ? `${API_Base}/${resume.filePath}` : null
+                                // file_path is stored as "data/uploads/<name>"; files are served at "/uploads/<name>"
+                                const resumeUrl = resume.filePath
+                                    ? `${API_BASE}/uploads/${resume.filePath.split("/").pop()}`
+                                    : null
                                 
                                 return (
                                     <Card key={resume.id} className="hover:shadow-md transition-shadow">
@@ -258,9 +362,30 @@ export default function ResumesPage() {
                                                         <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                                         <span className="truncate">Version {resume.version}</span>
                                                     </CardTitle>
-                                                    <CardDescription className="text-xs truncate">
-                                                        {resume.fileName}
-                                                    </CardDescription>
+                                                    {editingResumeId === resume.id ? (
+                                                        <div className="flex items-center gap-1.5">
+                                                            <Input
+                                                                value={editResumeName}
+                                                                onChange={(e) => setEditResumeName(e.target.value)}
+                                                                autoFocus
+                                                                className="h-7 text-xs"
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === "Enter") saveResumeName()
+                                                                    if (e.key === "Escape") setEditingResumeId(null)
+                                                                }}
+                                                            />
+                                                            <Button size="icon" className="h-7 w-7 shrink-0" onClick={saveResumeName} title="Save">
+                                                                <Check className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                            <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => setEditingResumeId(null)} title="Cancel">
+                                                                <X className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                        </div>
+                                                    ) : (
+                                                        <CardDescription className="text-xs truncate">
+                                                            {resume.fileName}
+                                                        </CardDescription>
+                                                    )}
                                                     <CardDescription className="text-xs">
                                                         {resume.uploadedAt.toLocaleDateString()}
                                                     </CardDescription>
@@ -278,6 +403,24 @@ export default function ResumesPage() {
                                                         </Button>
                                                     )}
                                                     <Badge variant="outline" className="font-mono text-xs">v{resume.version}</Badge>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                                        onClick={() => startEditResume(resume)}
+                                                        title="Rename"
+                                                    >
+                                                        <Pencil className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                                                        onClick={() => handleDeleteResume(resume)}
+                                                        title="Delete version"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
                                                 </div>
                                             </div>
                                         </CardHeader>

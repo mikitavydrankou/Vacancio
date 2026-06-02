@@ -96,22 +96,21 @@ export default function HomePage() {
         activeResumeVersion={activeResumeVersion}
         onProfileChange={setActiveProfileId}
         onResumeVersionChange={setActiveResumeVersion}
+        isLoading={isLoading}
       />
 
-      <main className="max-w-[1400px] mx-auto px-6 py-6 space-y-6">
+      <main className="max-w-[1400px] mx-auto px-6 py-6 space-y-8">
         {/* Top Section - Add Job Form */}
-        <div className="w-full">
-          <AddJobForm
-            resumes={resumes}
-            activeProfileId={activeProfileId}
-            activeResumeVersion={activeResumeVersion}
-            onSubmit={handleCreateApplication}
-            onRefresh={refreshData}
-          />
-        </div>
+        <AddJobForm
+          resumes={resumes}
+          activeProfileId={activeProfileId}
+          activeResumeVersion={activeResumeVersion}
+          onSubmit={handleCreateApplication}
+        />
 
         {/* Analytics Dashboard */}
-        <div className="p-4 bg-card rounded-lg border border-border shadow-sm">
+        <div className="p-5 bg-card rounded-xl border border-border shadow-sm space-y-4">
+          <h3 className="text-sm font-semibold text-muted-foreground">Overview</h3>
           <AnalyticsDashboard
             applications={applications}
             resumes={resumes}
@@ -153,6 +152,12 @@ export default function HomePage() {
 
         {/* Applications List */}
         <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold">
+              Applications <span className="text-muted-foreground font-normal">· {filteredApps.length}</span>
+            </h3>
+          </div>
+
           {/* Search Bar */}
           <div className="relative">
             <Input

@@ -20,6 +20,8 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      # Same-origin proxy: the browser hits the frontend, which forwards /api/backend
+      # to the backend container. Mirrors production (single origin, port 3000).
+      BACKEND_URL: http://server:8000/:path*
     command: pnpm dev
     restart: unless-stopped

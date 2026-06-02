@@ -1,5 +1,23 @@
+import os
+
 from sqlalchemy.orm import Session
 from . import models, schemas
+
+
+def get_setting(db: Session, key: str, default: str = None):
+    setting = db.query(models.Setting).filter(models.Setting.key == key).first()
+    return setting.value if setting else default
+
+
+def set_setting(db: Session, key: str, value: str):
+    setting = db.query(models.Setting).filter(models.Setting.key == key).first()
+    if setting:
+        setting.value = value
+    else:
+        setting = models.Setting(key=key, value=value)
+        db.add(setting)
+    db.commit()
+    return setting
 
 
 def get_profile(db: Session, profile_id: str):
@@ -17,6 +35,16 @@ def get_profiles(db: Session, skip: int = 0, limit: int = 100):
 def create_profile(db: Session, profile: schemas.ProfileCreate):
     db_profile = models.Profile(name=profile.name)
     db.add(db_profile)
+    db.commit()
+    db.refresh(db_profile)
+    return db_profile
+
+
+def update_profile(db: Session, profile_id: str, name: str):
+    db_profile = get_profile(db, profile_id)
+    if not db_profile:
+        return None
+    db_profile.name = name
     db.commit()
     db.refresh(db_profile)
     return db_profile
@@ -68,6 +96,34 @@ def get_applications(db: Session, profile_id: str = None, resume_version: int = 
     if resume_version:
         query = query.filter(models.JobApplication.resume_version == resume_version)
     return query.order_by(models.JobApplication.applied_at.desc()).offset(skip).limit(limit).all()
+
+
+def update_resume(db: Session, resume_id: str, name: str):
+    db_resume = get_resume(db, resume_id)
+    if not db_resume:
+        return None
+    db_resume.name = name
+    db.commit()
+    db.refresh(db_resume)
+    return db_resume
+
+
+def delete_resume(db: Session, resume_id: str):
+    db_resume = get_resume(db, resume_id)
+    if not db_resume:
+        return None
+
+    # Remove the uploaded file from disk (best effort).
+    if db_resume.file_path:
+        try:
+            os.remove(db_resume.file_path)
+        except OSError:
+            pass
+
+    # Associated applications cascade-delete via the relationship.
+    db.delete(db_resume)
+    db.commit()
+    return db_resume
 
 
 def get_application(db: Session, application_id: str):

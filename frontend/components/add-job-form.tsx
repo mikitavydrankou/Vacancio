@@ -1,13 +1,12 @@
-import { useState, useRef } from "react"
-import type { Resume, JobSource, JobApplication, ResumeProfile } from "@/lib/types"
+import { useState, type KeyboardEvent } from "react"
+import type { JobSource, JobApplication, Resume } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Upload, Link as LinkIcon } from "lucide-react"
+import { Plus, Link as LinkIcon, Sparkles, ArrowRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
-import { uploadResume } from "@/lib/api"
 import { detectJobSourceFromText, getSourceLabel } from "@/lib/job-parser"
 import { SOURCES } from "@/lib/constants/application"
 
@@ -16,7 +15,6 @@ interface AddJobFormProps {
     activeProfileId: string
     activeResumeVersion: string
     onSubmit: (app: Partial<JobApplication>) => Promise<void>
-    onRefresh: () => Promise<void>
 }
 
 export function AddJobForm({
@@ -24,74 +22,56 @@ export function AddJobForm({
     activeProfileId,
     activeResumeVersion,
     onSubmit,
-    onRefresh,
 }: AddJobFormProps) {
     const { toast } = useToast()
     const [description, setDescription] = useState("")
     const [jobUrl, setJobUrl] = useState("")
     const [selectedSource, setSelectedSource] = useState<JobSource>("other")
-    const [parseSuccess, setParseSuccess] = useState(false)
-    const fileInputRef = useRef<HTMLInputElement>(null)
 
+    const hasProfile = Boolean(activeProfileId)
+    const profileResumes = resumes.filter((r) => r.profileId === activeProfileId)
+    const hasResume = profileResumes.length > 0
+    const canSubmit = hasProfile && hasResume && description.trim().length > 0
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file || !activeProfileId) return
+    const handleSubmit = async () => {
+        if (!description.trim() || !activeProfileId) return
 
-        try {
-            await uploadResume(activeProfileId, file)
-            await onRefresh()
-        } catch (e) {
-            console.error(e)
-            alert("Upload failed")
-        }
-    }
-
-    const handleUrlSubmit = async () => {
-        if (!description || !activeProfileId) return
-
-        // Default to latest version if not selected
+        // Default to latest version if none selected
         let targetVersion = activeResumeVersion ? parseInt(activeResumeVersion) : null
         if (!targetVersion) {
-            const pResumes = resumes.filter(r => r.profileId === activeProfileId)
-            if (pResumes.length > 0) {
-                targetVersion = Math.max(...pResumes.map(r => r.version))
+            if (profileResumes.length > 0) {
+                targetVersion = Math.max(...profileResumes.map((r) => r.version))
             } else {
-                toast({ title: "Error", description: "No resume version found. Please upload one first.", variant: "destructive" })
+                toast({
+                    title: "No resume found",
+                    description: "Upload a resume version first (Manage Profiles & Resumes).",
+                    variant: "destructive",
+                })
                 return
             }
         }
 
-        // Capture data
         const textToProcess = description
         const currentJobUrl = jobUrl
-        const profileIdToUse = activeProfileId
         const sourceToUse = selectedSource
 
-        // Clear UI immediately
+        // Clear UI immediately for a snappy feel
         setDescription("")
         setJobUrl("")
+        setSelectedSource("other")
 
-
-        toast({
-            title: "Queued",
-            description: "Job added to queue for parsing.",
-        })
+        toast({ title: "Queued", description: "Job added — AI is parsing the details." })
 
         try {
-            // Auto-detect source from text if "other" is selected
             const finalSource = sourceToUse === "other" ? detectJobSourceFromText(textToProcess) : sourceToUse
-
-            // Find resume
-            const targetResume = resumes.find(r => r.profileId === profileIdToUse && r.version === targetVersion)
+            const targetResume = profileResumes.find((r) => r.version === targetVersion)
             if (!targetResume) return
 
-            const app: Partial<JobApplication> = {
-                profileId: profileIdToUse,
+            await onSubmit({
+                profileId: activeProfileId,
                 resumeId: targetResume.id,
                 resumeVersion: targetVersion,
                 url: currentJobUrl,
-
                 company: "Parsing...",
                 position: "Parsing...",
                 location: "",
@@ -103,97 +83,98 @@ export function AddJobForm({
                 rawData: textToProcess,
                 status: "parsing",
                 source: finalSource,
-            }
-
-            await onSubmit(app)
+            })
         } catch (error) {
             console.error("Failed to add job:", error)
-            toast({
-                title: "Error",
-                description: "Failed to queue job.",
-                variant: "destructive"
-            })
+            toast({ title: "Error", description: "Failed to queue job.", variant: "destructive" })
         }
     }
 
-    return (
-        <div className="space-y-4 p-4 bg-card rounded-xl border border-border shadow-sm">
-            <h3 className="text-sm font-semibold flex items-center gap-2">
-                <Plus className="h-4 w-4" /> Add Application
-            </h3>
+    const handleKeyDown = (e: KeyboardEvent) => {
+        // Cmd/Ctrl + Enter submits
+        if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && canSubmit) {
+            handleSubmit()
+        }
+    }
 
-            <div className="space-y-3">
-                {/* Source Selection */}
-                <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground ml-1">Source</label>
-                    <Select value={selectedSource} onValueChange={(v) => setSelectedSource(v as JobSource)}>
-                        <SelectTrigger className="h-9">
+    const hint = !hasProfile
+        ? "Select or create a profile to start adding applications."
+        : !hasResume
+            ? "Upload a resume version first — open Manage Profiles & Resumes."
+            : "Tip: press ⌘/Ctrl + Enter to add."
+
+    return (
+        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between gap-4 px-5 py-3 border-b border-border bg-muted/30">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+                        <Plus className="h-3.5 w-3.5" />
+                    </span>
+                    Add Application
+                </h3>
+                <span className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Paste a posting — AI fills in the rest
+                </span>
+            </div>
+
+            <div className="p-5 space-y-3">
+                {/* Primary: job description */}
+                <textarea
+                    placeholder={
+                        hasProfile
+                            ? "Paste the full job description here…"
+                            : "Select a profile to start"
+                    }
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={!hasProfile}
+                    rows={5}
+                    className={cn(
+                        "w-full px-3.5 py-3 text-sm bg-background border border-border rounded-lg resize-y min-h-[120px]",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-all",
+                        "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/40",
+                    )}
+                />
+
+                {/* Secondary: source + url */}
+                <div className="flex flex-col sm:flex-row gap-2.5">
+                    <Select
+                        value={selectedSource}
+                        onValueChange={(v) => setSelectedSource(v as JobSource)}
+                        disabled={!hasProfile}
+                    >
+                        <SelectTrigger className="h-9 w-full sm:w-44 shrink-0">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="other">Auto-detect</SelectItem>
-                            {SOURCES.filter(s => s !== "other").map((s) => (
+                            <SelectItem value="other">Auto-detect source</SelectItem>
+                            {SOURCES.filter((s) => s !== "other").map((s) => (
                                 <SelectItem key={s} value={s}>{getSourceLabel(s)}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
+
+                    <div className="relative flex-1">
+                        <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                            placeholder="Job URL (optional)"
+                            value={jobUrl}
+                            onChange={(e) => setJobUrl(e.target.value)}
+                            disabled={!hasProfile}
+                            className="h-9 pl-9"
+                        />
+                    </div>
                 </div>
 
-                {/* Job URL Input */}
-                <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground ml-1 flex items-center gap-1">
-                        <LinkIcon className="h-3 w-3" /> Job URL (Optional)
-                    </label>
-                    <Input
-                        placeholder="https://..."
-                        value={jobUrl}
-                        onChange={(e) => setJobUrl(e.target.value)}
-                        disabled={!activeProfileId}
-                        className="h-9"
-                    />
-                </div>
-
-                {/* Text Area */}
-                <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground ml-1">Job Description</label>
-                    <textarea
-                        placeholder={activeProfileId ? "Paste job description here..." : "Select a profile to start"}
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        disabled={!activeProfileId}
-                        className={cn(
-                            "w-full px-3 py-2.5 text-sm bg-background border rounded-lg resize-none min-h-[100px]",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all",
-                            "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/50",
-                            parseSuccess && "border-green-500/50"
-                        )}
-                        rows={6}
-                    />
-                </div>
-
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-1">
-                    <Button
-                        onClick={handleUrlSubmit}
-                        disabled={!description || !activeProfileId}
-                        className="flex-1 shadow-sm"
-                    >
-
-                        <Plus className="h-4 w-4 mr-2" />
+                {/* Footer: hint + action */}
+                <div className="flex items-center justify-between gap-3 pt-1">
+                    <p className="text-xs text-muted-foreground truncate">{hint}</p>
+                    <Button onClick={handleSubmit} disabled={!canSubmit} className="shrink-0 gap-1.5">
                         Add Application
-                    </Button>
-
-                    <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" />
-                    <Button
-                        variant="secondary"
-                        size="icon"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={!activeProfileId}
-                        title="Upload new resume version"
-                        className="shrink-0"
-                    >
-                        <Upload className="h-4 w-4 text-muted-foreground" />
+                        <ArrowRight className="h-4 w-4" />
                     </Button>
                 </div>
             </div>

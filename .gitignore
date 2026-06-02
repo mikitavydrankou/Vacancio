@@ -4,6 +4,8 @@
 api/
 
 server/uploads/
+server/data/
+data/
 
 # Python
 __pycache__/

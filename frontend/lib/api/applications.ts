@@ -1,11 +1,6 @@
 import type { JobApplication, ApplicationStatus } from "@/lib/types"
 import { mapApplicationFromApi, mapApplicationToApi } from "./mappers"
-
-const API_BASE =
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-    (typeof window !== "undefined"
-        ? `http://${window.location.hostname}:8000`
-        : "http://localhost:8000")
+import { API_BASE } from "./base"
 
 /**
  * Fetches all applications or filtered by profile/resume version

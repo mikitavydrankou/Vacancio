@@ -32,6 +32,14 @@ class Seniority(str, enum.Enum):
     manager = "manager"
 
 
+class Setting(Base):
+    """Simple key-value store for app-level settings (e.g. API keys)."""
+    __tablename__ = "settings"
+
+    key: Mapped[str] = mapped_column(primary_key=True)
+    value: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+
 class Profile(Base):
     __tablename__ = "profiles"
 
@@ -54,7 +62,9 @@ class Resume(Base):
     uploaded_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     profile: Mapped["Profile"] = relationship(back_populates="resumes")
-    applications: Mapped[List["JobApplication"]] = relationship(back_populates="resume")
+    applications: Mapped[List["JobApplication"]] = relationship(
+        back_populates="resume", cascade="all, delete-orphan"
+    )
 
 
 class JobApplication(Base):

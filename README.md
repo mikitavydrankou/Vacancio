@@ -1,73 +1,79 @@
-# Vacancio
+<div align="center">
 
-Track and manage your resume conversion rate with automated job parsing and analytics LOCALLY.
+<img src="assets/banner.png" alt="Vacancio" width="440" />
 
-## Core Features
+### Self-hosted job-application tracker with AI parsing
 
-- AI-Powered Parsing: Extract stack, category, and job details from raw text without manual data entry.
-- Conversion Tracking: Monitor your success rate across different resume versions.
-- Advanced Sorting: Filter and organize applications by resume, tech stack, category, or status.
-- Data Analytics: Visualize application trends and identify missing information in your profile.
+Paste a posting → structured stack, salary, requirements and seniority.
+Track applications, version your resumes, and measure your real conversion rate — all on your machine.
 
-## Tech Stack
+[![Build and publish image](https://github.com/mikitavydrankou/Vacancio/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/mikitavydrankou/Vacancio/actions/workflows/docker-publish.yml)
 
-- Frontend: Next.js, Tailwind CSS, Shadcn UI
-- Backend: FastAPI (Python), SQLAlchemy
-- Database: SQLite
-- AI: OpenRouter (GPT-4o-mini)
-- Infrastructure: Docker
+</div>
 
-## Getting Started
+---
 
-### Prerequisites
+## Features
 
-- Docker and Docker Compose
-- OpenRouter API Key
+- **AI parsing** — raw job text or a URL → structured fields, zero manual entry.
+- **Conversion tracking** — a status pipeline per application; response / interview / offer rates per resume version.
+- **Filter & group** — by resume, stack, source or status; star favorites, archive the rest.
+- **Import / export** — your data as JSON, anytime.
 
-Ubuntu:
+**Stack:** Next.js 16 · FastAPI · SQLAlchemy 2 · SQLite (PostgreSQL optional) · OpenRouter — shipped as one Docker image.
 
-1. export env vars:
+---
+
+## Quick start
+
+Needs Docker. AI parsing needs an [OpenRouter key](https://openrouter.ai/keys); everything else works without one.
+
 ```bash
-   export OPENROUTER_API_KEY=sk-or-v1-xxxxx
-```
-2. Run the application:
-```bash
-   docker compose -f docker-compose.yml up -d
+docker run -d --name vacancio -p 3000:3000 -v vacancio-data:/app/server/data ghcr.io/mikitavydrankou/vacancio:latest
 ```
 
+Open **http://localhost:3000** and paste your key into **Settings** (gear icon) — stored locally, no restart.
+**One command, one port:** the browser only hits `3000`; the API is proxied inside the container.
 
-### Dev installation
+> [!TIP]
+> Compose works too: `OPENROUTER_API_KEY=sk-or-... docker compose up -d`
 
-1. Clone the environment template:
-   ```bash
-   cp .env.example .env
-   ```
+## Usage
 
-2. Configure OpenRouter:
-   Edit `.env` and provide your `OPENROUTER_API_KEY`.
+1. **Manage Profiles & Resumes** → create a profile, upload a resume PDF (keep multiple versions).
+2. **Dashboard** → paste a posting (+ optional URL); AI fills in the details in the background.
+3. **Track** → No response → Screening → Interview → Offer / Rejected. (*Parsing* and *Error* are automatic.)
+4. **Review** → filter, favorite, archive; your rates update live.
 
-3. Launch the application:
-   ```bash
-   docker compose -f compose.dev.yml up -d
-   ```
+New here? The **ⓘ** button gives a 30-second tour.
 
-4. Access the web interface:
-   Open `http://localhost:3000` in your browser.
+---
 
-## Updates
+## Configuration
 
-To update to the latest version without losing data:
+Everything is optional except the OpenRouter key (for AI parsing).
 
-1. Pull the latest image:
-   ```bash
-   docker compose pull
-   ```
+| Variable             | Default                      | Purpose                                    |
+| -------------------- | ---------------------------- | ------------------------------------------ |
+| `OPENROUTER_API_KEY` | —                            | Enables AI parsing (or set it in Settings) |
+| `DATABASE_URL`       | `sqlite:///data/vacancio.db` | Use PostgreSQL instead                     |
+| `DATA_DIR`           | `data`                       | Where the DB and uploads live              |
 
-2. Restart the application:
-   ```bash
-   docker compose -f docker-compose.yml up -d
-   ```
+Your data lives in the `vacancio-data` volume and survives updates:
 
-Your database and uploads are safely stored in the `./data` folder and persist across updates.
+```bash
+docker compose pull && docker compose up -d
+```
 
+## Development
 
+```bash
+cp .env.example .env                       # add your key
+docker compose -f compose.dev.yml up -d    # hot reload
+```
+
+UI `:3000` · API docs `:8000/docs` · internals in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+---
+
+<div align="center"><sub>Built for job seekers who'd rather measure than guess.</sub></div>

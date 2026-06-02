@@ -9,6 +9,7 @@ import json
 from core.database import get_db
 from database import crud, schemas, models
 from services.job_parser.ai.parser import parse_with_ai
+from services.settings_service import get_openrouter_key
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -42,7 +43,8 @@ def process_application_background(app_id: str):
             logger.warning(f"❌ No raw data for application {app_id}")
             return
 
-        parsed = parse_with_ai(db_app.raw_data, source_url=db_app.url)
+        api_key = get_openrouter_key(db)
+        parsed = parse_with_ai(db_app.raw_data, source_url=db_app.url, api_key=api_key)
         logger.info(f"✅ Parsing complete for {app_id}: {parsed.job_title} @ {parsed.company}")
         
         updates = schemas.JobApplicationUpdate(
@@ -80,7 +82,7 @@ def process_application_background(app_id: str):
         db.close()
 
 
-@router.get("/", response_model=List[schemas.JobApplication])
+@router.get("", response_model=List[schemas.JobApplication])
 def read_applications(
     profile_id: Optional[str] = None, 
     resume_version: Optional[int] = None,
@@ -91,7 +93,7 @@ def read_applications(
     return crud.get_applications(db, profile_id=profile_id, resume_version=resume_version, skip=skip, limit=limit)
 
 
-@router.post("/", response_model=schemas.JobApplication)
+@router.post("", response_model=schemas.JobApplication)
 def create_application(
     app_data: schemas.JobApplicationCreate, 
     background_tasks: BackgroundTasks,

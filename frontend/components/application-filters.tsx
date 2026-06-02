@@ -2,7 +2,7 @@ import type { ApplicationStatus, JobSource, ResumeProfile } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Star, AlertCircle, CheckCircle, X } from "lucide-react"
+import { Star, AlertCircle, CheckCircle, X, SlidersHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getSourceLabel } from "@/lib/job-parser"
 import { STATUS_CONFIG, STATUSES, SOURCES } from "@/lib/constants/application"
@@ -46,13 +46,41 @@ export function ApplicationFilters({
     onSelectedLocationsChange,
     onMissingFieldFilterChange,
 }: ApplicationFiltersProps) {
-    return (
-        <div className="space-y-3 p-4 bg-card rounded-lg border border-border shadow-sm">
-            <h3 className="text-sm font-semibold">Filters</h3>
+    const hasActiveFilters =
+        profileFilter !== "all" ||
+        sourceFilter !== "all" ||
+        statusFilter !== "all" ||
+        showFavoritesOnly ||
+        selectedTechs.length > 0 ||
+        selectedLocations.length > 0 ||
+        missingFieldFilter !== "all"
 
-            <div className="flex gap-2">
+    const clearAll = () => {
+        onProfileFilterChange("all")
+        onSourceFilterChange("all")
+        onStatusFilterChange("all")
+        onShowFavoritesOnlyChange(false)
+        onSelectedTechsChange([])
+        onSelectedLocationsChange([])
+        onMissingFieldFilterChange("all")
+    }
+
+    return (
+        <div className="space-y-3 p-5 bg-card rounded-xl border border-border shadow-sm">
+            <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+                    <SlidersHorizontal className="h-4 w-4" /> Filters
+                </h3>
+                {hasActiveFilters && (
+                    <Button variant="ghost" size="sm" onClick={clearAll} className="h-7 gap-1 text-xs">
+                        <X className="h-3 w-3" /> Clear all
+                    </Button>
+                )}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
                 <Select value={profileFilter} onValueChange={onProfileFilterChange}>
-                    <SelectTrigger className="h-8 text-xs bg-background">
+                    <SelectTrigger className="h-8 text-xs bg-background flex-1 min-w-[140px]">
                         <SelectValue placeholder="Profile" />
                     </SelectTrigger>
                     <SelectContent>
@@ -64,7 +92,7 @@ export function ApplicationFilters({
                 </Select>
 
                 <Select value={sourceFilter} onValueChange={(v) => onSourceFilterChange(v as JobSource | "all")}>
-                    <SelectTrigger className="h-8 text-xs bg-background">
+                    <SelectTrigger className="h-8 text-xs bg-background flex-1 min-w-[140px]">
                         <SelectValue placeholder="Source" />
                     </SelectTrigger>
                     <SelectContent>
@@ -76,7 +104,7 @@ export function ApplicationFilters({
                 </Select>
 
                 <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as ApplicationStatus | "all")}>
-                    <SelectTrigger className="h-8 text-xs bg-background">
+                    <SelectTrigger className="h-8 text-xs bg-background flex-1 min-w-[140px]">
                         <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -96,7 +124,7 @@ export function ApplicationFilters({
                     )}
                 >
                     <Star className={cn("h-3 w-3", showFavoritesOnly && "fill-amber-400")} />
-                    {showFavoritesOnly ? "Favorites" : "Favorites"}
+                    Favorites
                 </button>
             </div>
 

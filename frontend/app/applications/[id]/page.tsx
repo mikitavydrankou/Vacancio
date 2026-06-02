@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { fetchApplication, updateApplicationStatus, updateApplication, reparseApplication } from "@/lib/api"
 import type { JobApplication, ApplicationStatus } from "@/lib/types"
-import { STATUS_CONFIG, STATUSES } from "@/lib/constants/application"
+import { STATUS_CONFIG, MANUAL_STATUSES } from "@/lib/constants/application"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, ExternalLink, Calendar, MapPin, Building2, Banknote, Briefcase, GraduationCap, Laptop, CheckCircle2, Edit, Save, X, RefreshCw } from "lucide-react"
 
 import { cn, ensureAbsoluteUrl } from "@/lib/utils"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { getSourceColor, getSourceLabel } from "@/lib/job-parser"
 import { EditTagsField } from "@/components/edit-tags-field"
 import { EditListField } from "@/components/edit-list-field"
@@ -248,10 +248,10 @@ export default function ApplicationDetailPage() {
                   )}
                   <Select value={app.status} onValueChange={(v) => handleStatusChange(v as ApplicationStatus)}>
                     <SelectTrigger className={cn("w-[140px] h-9 border", STATUS_CONFIG[app.status]?.color || STATUS_CONFIG.no_response.color)}>
-                      <SelectValue />
+                      <span className="truncate">{STATUS_CONFIG[app.status]?.label ?? "Set status"}</span>
                     </SelectTrigger>
                     <SelectContent>
-                      {STATUSES.map((s) => (
+                      {MANUAL_STATUSES.map((s) => (
                         <SelectItem key={s} value={s}>
                           {STATUS_CONFIG[s].label}
                         </SelectItem>

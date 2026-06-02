@@ -1,11 +1,6 @@
 import type { ResumeProfile } from "@/lib/types"
 import { mapProfileFromApi } from "./mappers"
-
-const API_BASE =
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-    (typeof window !== "undefined"
-        ? `http://${window.location.hostname}:8000`
-        : "http://localhost:8000")
+import { API_BASE } from "./base"
 
 /**
  * Fetches all profiles
@@ -29,6 +24,22 @@ export async function createProfile(name: string): Promise<ResumeProfile> {
     if (!res.ok) throw new Error("Failed to create profile")
     const data = await res.json()
     return mapProfileFromApi(data)
+}
+
+/**
+ * Renames a profile
+ */
+export async function updateProfile(id: string, name: string): Promise<ResumeProfile> {
+    const res = await fetch(`${API_BASE}/profiles/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+    })
+    if (!res.ok) {
+        const detail = await res.text().catch(() => "")
+        throw new Error(detail || "Failed to rename profile")
+    }
+    return mapProfileFromApi(await res.json())
 }
 
 /**

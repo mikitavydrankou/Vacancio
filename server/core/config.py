@@ -15,10 +15,7 @@ class Settings(BaseSettings):
     
     # Uploads
     UPLOAD_DIR: str = "data/uploads"
-    
-    # Security
-    SECRET_KEY: str = "changeme"
-    
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_ignore_empty=True,

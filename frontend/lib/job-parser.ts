@@ -1,6 +1,5 @@
 import type { ParsedJobData, JobSource } from "./types"
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+import { API_BASE as BACKEND_URL } from "./api/base"
 
 export function detectJobSource(url: string): JobSource {
   try {

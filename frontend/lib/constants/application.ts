@@ -10,6 +10,7 @@ export const STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: st
     failed: { label: "Error", color: "bg-red-500/20 text-red-400 border-red-500/50" },
 }
 
+// Full set including automatic statuses — used for filtering and display.
 export const STATUSES: ApplicationStatus[] = [
     "no_response",
     "screening",
@@ -17,6 +18,16 @@ export const STATUSES: ApplicationStatus[] = [
     "offer",
     "rejected",
     "failed",
+]
+
+// Statuses a user can set manually. `parsing` and `failed` are assigned
+// automatically by the system, so they are never offered as options.
+export const MANUAL_STATUSES: ApplicationStatus[] = [
+    "no_response",
+    "screening",
+    "interview",
+    "offer",
+    "rejected",
 ]
 
 

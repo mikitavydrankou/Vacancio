@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Layers, Archive } from "lucide-react"
+import { Layers, Archive, UserPlus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import type { Resume, ResumeProfile } from "@/lib/types"
+import { SettingsDialog } from "@/components/settings-dialog"
+import { InfoDialog } from "@/components/info-dialog"
+import { cn } from "@/lib/utils"
 
 interface ApplicationHeaderProps {
     viewMode: "flat" | "grouped"
@@ -13,6 +16,7 @@ interface ApplicationHeaderProps {
     activeResumeVersion: string
     onProfileChange: (id: string) => void
     onResumeVersionChange: (version: string) => void
+    isLoading?: boolean
 }
 
 export function ApplicationHeader({
@@ -23,9 +27,13 @@ export function ApplicationHeader({
     activeProfileId,
     activeResumeVersion,
     onProfileChange,
-    onResumeVersionChange
+    onResumeVersionChange,
+    isLoading = false
 }: ApplicationHeaderProps) {
     const router = useRouter()
+
+    // First run: finished loading and no profiles exist yet. Guide the user to create one.
+    const isFirstRun = !isLoading && profiles.length === 0
 
     const activeProfileResumes = resumes
         .filter(r => r.profileId === activeProfileId)
@@ -44,9 +52,9 @@ export function ApplicationHeader({
 
                     {/* Center Section: Profile & Version Dropdowns */}
                     <div className="flex items-center gap-2 px-4 border-x border-border/50">
-                        <Select value={activeProfileId} onValueChange={onProfileChange}>
+                        <Select value={activeProfileId} onValueChange={onProfileChange} disabled={isLoading || isFirstRun}>
                             <SelectTrigger className="h-8 w-[180px] text-sm bg-background/50">
-                                <SelectValue placeholder="Select Profile" />
+                                <SelectValue placeholder={isFirstRun ? "No profiles yet" : "Select Profile"} />
                             </SelectTrigger>
                             <SelectContent>
                                 {profiles.map(p => (
@@ -69,7 +77,16 @@ export function ApplicationHeader({
 
                     {/* Right Section: Navigation & View Mode */}
                     <div className="flex items-center gap-3 min-w-fit ml-auto">
-                        <Button variant="ghost" size="sm" onClick={() => router.push("/resumes")} className="h-8 text-xs">
+                        <Button
+                            variant={isFirstRun ? "default" : "ghost"}
+                            size="sm"
+                            onClick={() => router.push("/resumes")}
+                            className={cn(
+                                "h-8 text-xs",
+                                isFirstRun && "animate-pulse ring-2 ring-primary/40"
+                            )}
+                        >
+                            {isFirstRun && <UserPlus className="h-3.5 w-3.5 mr-1.5" />}
                             Manage Profiles & Resumes
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => router.push("/archived")} className="h-8 text-xs">
@@ -96,6 +113,11 @@ export function ApplicationHeader({
                                 Hierarchical
                             </Button>
                         </div>
+
+                        <div className="h-5 w-px bg-border/50" />
+
+                        <InfoDialog />
+                        <SettingsDialog />
                     </div>
                 </div>
             </div>

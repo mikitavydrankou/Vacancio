@@ -2,4 +2,5 @@
 export * from "./applications"
 export * from "./profiles"
 export * from "./resumes"
+export * from "./settings"
 export * from "./mappers"

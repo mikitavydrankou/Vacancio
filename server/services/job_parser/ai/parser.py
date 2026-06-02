@@ -24,11 +24,12 @@ def parse_with_ai(
     text: str,
     model: str = "openai/gpt-4o-mini",
     custom_prompt: str = None,
-    source_url: str = None
+    source_url: str = None,
+    api_key: str = None
 ) -> JobPosting:
-    api_key = os.getenv("OPENROUTER_API_KEY")
+    api_key = api_key or os.getenv("OPENROUTER_API_KEY")
     if not api_key:
-        raise ValueError("OPENROUTER_API_KEY not set")
+        raise ValueError("OpenRouter API key not set. Add it in Settings or via OPENROUTER_API_KEY.")
     
     prompt = custom_prompt or DEFAULT_PROMPT
     full_prompt = f"{prompt}\n\nJob text:\n{text}"

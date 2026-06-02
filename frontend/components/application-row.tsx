@@ -1,9 +1,9 @@
 import type { JobApplication, ApplicationStatus, ResumeProfile } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { ExternalLink, Trash2, Star, Archive, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { STATUS_CONFIG, STATUSES } from "@/lib/constants/application"
+import { STATUS_CONFIG, MANUAL_STATUSES } from "@/lib/constants/application"
 import { formatDate, ensureAbsoluteUrl } from "@/lib/utils/formatting"
 
 interface ApplicationRowProps {
@@ -154,10 +154,10 @@ export function ApplicationRow({
             </button>
             <Select value={app.status} onValueChange={(v) => onStatusChange(app, v as ApplicationStatus)}>
                 <SelectTrigger className={cn("h-7 text-xs w-28 border-0 shadow-none", STATUS_CONFIG[app.status]?.color || STATUS_CONFIG.no_response.color)}>
-                    <SelectValue />
+                    <span className="truncate text-xs">{STATUS_CONFIG[app.status]?.label ?? "Set status"}</span>
                 </SelectTrigger>
                 <SelectContent>
-                    {(Object.keys(STATUS_CONFIG) as ApplicationStatus[]).map((s) => (
+                    {MANUAL_STATUSES.map((s) => (
                         <SelectItem key={s} value={s}>
                             <span className="text-xs">{STATUS_CONFIG[s].label}</span>
                         </SelectItem>
