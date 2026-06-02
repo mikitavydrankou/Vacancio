@@ -1,7 +1,7 @@
 # Environment variables
 .env
 .env.bak
-api/
+/api/
 
 server/uploads/
 server/data/
